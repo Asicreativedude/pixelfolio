@@ -1,0 +1,35 @@
+.contactContainer {
+  background-color: #fff;
+  border: 6px solid black;
+  padding: 2rem;
+  margin: 0 auto;
+  width: 70%;
+  display: flex;
+  justify-content: space-between;
+  /* align-items: center; */
+}
+.contactContent {
+  width: 60%;
+  padding-right: 2rem;
+  height: 100%;
+}
+.contactTitle {
+  color: red;
+  margin: 0;
+  font-size: 1rem;
+  padding: 12px;
+}
+.contactLink {
+  color: black;
+  padding: 10px 12px;
+  font-size: 0.6rem;
+  display: block;
+  margin: 0;
+}
+.contactImgWrapper {
+  width: 40%;
+  height: 100%;
+}
+.contactImg {
+  width: 100%;
+}

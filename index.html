@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Asi Portfolio</title>
+    <script src="https://cdn.jsdelivr.net/npm/pace-js@latest/pace.min.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/pace-js@latest/pace-theme-default.min.css" />
+  </head>
+  <body>
+    <div class="game-container">
+      <canvas class="game-canvas" width="704" height="352"></canvas>
+      <div class="mobileButtons-container">
+        <div class="buttons-movment">
+          <button class="dpad-button dpad-left" data-btn="a">
+            <img src="./buttons/upMobile.svg" />
+          </button>
+
+          <div class="updownBtns">
+            <button class="dpad-button dpad-up" data-btn="w">
+              <img src="./buttons/upMobile.svg" />
+            </button>
+            <button class="dpad-button dpad-down" data-btn="s">
+              <img src="./buttons/upMobile.svg" />
+            </button>
+          </div>
+          <button class="dpad-button dpad-right" data-btn="d">
+            <img src="./buttons/upMobile.svg" />
+          </button>
+        </div>
+
+        <div class="buttons-action">
+          <div class="dpad-button dpadAction" data-btn="enter">
+            <img src="./buttons/Enter.png" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="titleScreen-wrapper">
+      <div class="titleScreen">
+        <div class="title-wrapper">
+          <div class="text-wrapper">
+            <h1 class="gameTitle">
+              Asi Fleishhaker <br />
+              <span>Digital Creator</span>
+            </h1>
+            <h2 class="gameSubTitle">
+              Enjoy an interactive way to explore my work.<br />Speak with
+              others to learn cool things, find secrets and get to know me.
+            </h2>
+          </div>
+
+          <div class="start-wrapper">
+            <button class="startgame">Start Game!</button>
+            <h3 class="explainer">Press Space to Start</h3>
+          </div>
+        </div>
+
+        <div class="buttons-box-wrapper">
+          <div class="buttons-box-content">
+            <h2 class="buttons-box-title">Movement</h2>
+            <div class="buttons-movment">
+              <div class="keyboardBtn" data-btn="w">
+                <img src="./buttons/w.png" />
+              </div>
+              <div class="flex">
+                <div class="keyboardBtn" data-btn="a">
+                  <img src="./buttons/a.png" />
+                </div>
+                <div class="keyboardBtn" data-btn="s">
+                  <img src="./buttons/s.png" />
+                </div>
+                <div class="keyboardBtn" data-btn="d">
+                  <img src="./buttons/d.png" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="buttons-box-content">
+            <h2 class="buttons-box-title">Action</h2>
+            <div class="buttons-action">
+              <div class="keyboardBtn" data-btn="Enter">
+                <img src="./buttons/Enter.png" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3d REALM-->
+    <div class="threeDWrapper">
+      <div class="loaderbg" id="loaderbg"></div>
+      <canvas class="webgl"></canvas>
+      <button id="moveBtn">
+        <img class="arrowImg" src="./buttons/arrow.svg" />
+      </button>
+      <video
+        id="video"
+        width="1920"
+        height="1080"
+        loop
+        src="../static/Artworks/FuckU.mp4"></video>
+    </div>
+
+    <script>
+      if (screen.availHeight > screen.availWidth) {
+        document.querySelector('.titleScreen-wrapper').classList.add('hidden');
+      }
+      window.addEventListener('orientationchange', (event) => {
+        document
+          .querySelector('.titleScreen-wrapper')
+          .classList.toggle('hidden');
+      });
+      const loaderbg = document.getElementById('loaderbg');
+      Pace.on('done', function () {
+        setTimeout(() => {
+          loaderbg.style.display = 'none';
+        }, 500);
+      });
+    </script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

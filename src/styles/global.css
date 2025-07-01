@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Farro:wght@300;400;500;700&display=swap');
+
+html {
+  font-size: calc(0.625rem + 0.41666666666666663vw);
+}
+@media screen and (max-width: 1920px) {
+  html {
+    font-size: calc(0.625rem + 0.41666666666666674vw);
+  }
+}
+@media screen and (max-width: 1440px) {
+  html {
+    font-size: calc(0.8126951092611863rem + 0.20811654526534862vw);
+  }
+}
+@media screen and (max-width: 479px) {
+  html {
+    font-size: calc(0.7494769874476988rem + 0.8368200836820083vw);
+  }
+}
+html,
+body {
+  overflow: hidden;
+}
+
+:root {
+  font-family: 'Farro', sans-serif;
+  --border-color: #291d4d;
+  --dialog-background: #fff3b4;
+
+  --menu-background: #c4d0fb;
+  --menu-border-color: #9da7c9;
+  --menu-font-color: #100d3a;
+  --menu-selected-background: #7fc2ff;
+  --button-background: #e8eaf8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background: black;
+  margin: 0;
+  padding: 2rem;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.mobileButtons-container {
+  display: none;
+}
+
+.game-container {
+  display: none;
+  position: relative;
+  width: 704px;
+  height: 352px;
+  margin: 0 auto;
+  padding: 0;
+  transform: scale(2);
+}
+.fade-in {
+  animation: scene-transition-fade-in 1s forwards;
+}
+
+.shroomVibesOn {
+  animation: shroomVibesOn 10s forwards;
+}
+
+.game-container canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: none;
+}
+
+/* media queris */
+@media (max-width: 1440px) {
+  .game-container {
+    transform: scale(1.5);
+  }
+}
+
+@media (max-width: 992px) {
+  body {
+    flex-direction: column;
+    justify-content: space-around;
+  }
+  .game-container {
+    transform: unset;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+  .game-canvas {
+    width: 100%;
+    height: 100%;
+  }
+  .mobileButtons-container {
+    display: none;
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 300;
+    width: 100%;
+  }
+
+  button {
+    padding: 0;
+  }
+
+  .mobileButtons-container.fade-in {
+    align-items: center;
+    display: flex;
+  }
+  .buttons-movment,
+  .buttons-action {
+    width: 50%;
+    text-align: center;
+  }
+  .buttons-movment {
+    display: flex;
+    align-items: center;
+    padding-left: 2rem;
+    padding-bottom: 2rem;
+  }
+  .updownBtns {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .dpad-button {
+    background: none;
+    border: none;
+    outline: none;
+  }
+  .dpad-button img {
+    width: 75px;
+    height: 75px;
+  }
+  #d {
+    transform: rotateZ(90deg);
+  }
+  #a {
+    transform: rotateZ(-90deg);
+  }
+  #s {
+    transform: rotateZ(-180deg);
+  }
+}
+
+/** rando animtaions **/
+
+@keyframes shroomVibesOn {
+  0% {
+    filter: hue-rotate(0deg) blur(0px);
+  }
+  85% {
+    filter: hue-rotate(3600deg) blur(2px);
+  }
+  100% {
+    filter: hue-rotate(0deg) blur(0px);
+  }
+}
+
+/** 3dREALM **/
+
+.webgl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  outline: none;
+  width: 100%;
+  height: 100%;
+}
+#moveBtn,
+#moveBtn:visited {
+  position: absolute;
+  background-color: #dadada60;
+  padding: 1rem 2rem;
+  right: 20%;
+  bottom: 15%;
+  border-radius: 100%;
+  cursor: pointer;
+  border: none;
+  z-index: 2;
+}
+
+#moveBtn:hover,
+#moveBtn:active {
+  border: none;
+  background-color: #e59cfc60;
+}
+
+.arrowImg {
+  height: 50px;
+  opacity: 50%;
+}
+
+/** loader **/
+
+.pace {
+  -webkit-pointer-events: none;
+  pointer-events: none;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.pace.pace-inactive .pace-progress {
+  display: none;
+}
+
+.pace .pace-progress {
+  z-index: 2000;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 5rem;
+  width: 5rem;
+  background: black;
+
+  -webkit-transform: translate3d(0, 0, 0) !important;
+  -ms-transform: translate3d(0, 0, 0) !important;
+  transform: translate3d(0, 0, 0) !important;
+}
+
+.pace .pace-progress:after {
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0.5rem;
+  content: attr(data-progress-text);
+  font-weight: 100;
+  font-size: 5rem;
+  line-height: 1;
+  text-align: right;
+  color: #fff;
+}
+.loaderbg {
+  height: 100vh;
+  width: 100%;
+  background-color: black;
+  z-index: 50;
+  position: relative;
+}
+
+button {
+  padding: 1rem 2rem;
+  font-weight: bold;
+}
+
+.threeDWrapper {
+  display: none;
+}
+
+.hidden {
+  display: none;
+}

@@ -1,0 +1,63 @@
+.CharacterSelection {
+  position: absolute;
+  left: auto;
+  right: auto;
+  top: 0;
+  bottom: 0;
+  background: #000000;
+  color: white;
+  width: 100%;
+  text-align: center;
+}
+
+.characterSelectionTitle {
+  margin: 0;
+  background: var(--menu-font-color);
+  display: inline-block;
+  padding: 10px;
+  border-radius: 10px;
+}
+.btn-wrapper {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.charBtn {
+  height: 25vh;
+  width: 100%;
+  padding: 20px;
+  border: none;
+  cursor: pointer;
+  margin: 1rem;
+  background: var(--menu-background);
+  border-radius: 20px;
+}
+
+.charBtn:hover,
+.charBtn:focus {
+  background: var(--menu-selected-background);
+  border: none;
+}
+#firstChar {
+  background-image: url('../characters/choosingPos.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+#secondChar {
+  background-image: url('../characters//choosingPosIluz.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+#lastChar {
+  background-image: url('../characters//choosingPosAlien.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+@media (max-width: 992px) {
+  .charBtn {
+    height: 70vh;
+  }
+}

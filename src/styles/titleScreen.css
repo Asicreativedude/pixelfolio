@@ -1,0 +1,135 @@
+.titleScreen-wrapper {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.titleScreen {
+  text-align: center;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  background: #fdc795;
+  z-index: 10;
+  opacity: 1;
+}
+
+.title-wrapper {
+  text-align: left;
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4rem;
+}
+.gameTitle {
+  font-size: 4rem;
+  margin: 0rem;
+}
+.gameTitle span {
+  background: #ff5a5a;
+  color: white;
+  padding: 0 1rem;
+}
+.gameSubTitle {
+  line-height: 2;
+  font-weight: 400;
+  margin-bottom: 4rem;
+}
+.startgame {
+  display: block;
+  background: var(--button-background);
+  border: none;
+  margin: 0;
+  margin-bottom: 2rem;
+  font-weight: 500;
+  font-size: 48px;
+  padding: 8px 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--button-background);
+  color: var(--menu-font-color);
+  border: 0;
+  border-radius: 4px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.5s;
+  box-shadow: #ff5a5a -10px 10px;
+}
+.startgame:hover {
+  transform: translatey(-10px);
+  box-shadow: #ff5a5a -10px 10px;
+}
+
+.explainer {
+  background: #fcaa5f;
+  display: inline-block;
+  padding: 1rem;
+  border-radius: 10px;
+}
+.buttons-box-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background: #191919;
+  color: white;
+  width: 50%;
+  padding: 4rem;
+}
+.buttons-box-content {
+  margin: 1rem;
+}
+.buttons-box-title {
+  font-size: 3rem;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+.keyboardBtn {
+  image-rendering: pixelated;
+  display: inline-block;
+  margin: 5px;
+  transition: 0.2s all;
+}
+.keyboardBtn img {
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.15);
+}
+.flex {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+.titleScreen-wrapper.fade-out,
+.CharacterSelection.fade-out {
+  animation: scene-transition-fade-out 1s forwards;
+}
+@keyframes scene-transition-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 992px) {
+  .buttons-box-wrapper {
+    display: none;
+  }
+  .title-wrapper {
+    width: 100%;
+    text-align: center;
+    align-items: center;
+    padding: 2rem;
+    justify-content: center;
+  }
+  .explainer {
+    display: none;
+  }
+}
