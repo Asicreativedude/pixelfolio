@@ -119,8 +119,8 @@ export default class Sprite {
   // Calls updateAnimationProgress() to advance the animation.
 
   draw(ctx: CanvasRenderingContext2D, cameraPerson: { x: number; y: number }) {
-    const x = this.gameObject.x + utils.withGrid(10) - cameraPerson.x;
-    const y = this.gameObject.y + utils.withGrid(5) - cameraPerson.y;
+    const x = this.gameObject.x + utils.withGrid(9.5) - cameraPerson.x;
+    const y = this.gameObject.y + utils.withGrid(6) - cameraPerson.y;
     this.isShadowLoaded && ctx.drawImage(this.shadow, x - 4, y - 2);
     const [frameX, frameY] = this.frame;
     this.isLoaded &&

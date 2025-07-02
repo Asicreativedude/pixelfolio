@@ -60,7 +60,7 @@ export default class World {
         }
       );
 
-      this.map.drawLowerImage(this.ctx, this.cameraPerson);
+      this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.lowerImage);
 
       //Draw Game Objects
       Object.values(this.map.gameObjects as GameObjectConfig)
@@ -70,8 +70,9 @@ export default class World {
         .forEach((object) => {
           object.sprite.draw(this.ctx, this.cameraPerson);
         });
+
       //Draw Upper Layer
-      this.map.drawUpperImage(this.ctx, this.cameraPerson);
+      this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.upperImage);
 
       requestAnimationFrame(() => {
         setTimeout(() => {

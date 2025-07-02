@@ -33,7 +33,6 @@ export default class WorldMap {
 
     this.lowerImage = new Image();
     this.lowerImage.src = config.lowerSrc;
-
     this.upperImage = new Image();
     this.upperImage.src = config.upperSrc || '';
 
@@ -45,24 +44,36 @@ export default class WorldMap {
   // Draws map layers relative to the camera’s position.
   // These layers visually “sandwich” the player and objects for depth illusion.
 
-  drawLowerImage(
+  // drawLowerImage(
+  //   ctx: CanvasRenderingContext2D,
+  //   cameraPerson: { x: number; y: number }
+  // ) {
+  //   ctx.drawImage(
+  //     this.lowerImage,
+  //     utils.withGrid(9.5) - cameraPerson.x,
+  //     utils.withGrid(6) - cameraPerson.y
+  //   );
+  // }
+  // drawUpperImage(
+  //   ctx: CanvasRenderingContext2D,
+  //   cameraPerson: { x: number; y: number }
+  // ) {
+  //   ctx.drawImage(
+  //     this.upperImage,
+  //     utils.withGrid(9.5) - cameraPerson.x,
+  //     utils.withGrid(6) - cameraPerson.y
+  //   );
+  // }
+
+  drawImageLayer(
     ctx: CanvasRenderingContext2D,
-    cameraPerson: { x: number; y: number }
+    cameraPerson: { x: number; y: number },
+    image: HTMLImageElement
   ) {
     ctx.drawImage(
-      this.lowerImage,
-      utils.withGrid(10) - cameraPerson.x,
-      utils.withGrid(5) - cameraPerson.y
-    );
-  }
-  drawUpperImage(
-    ctx: CanvasRenderingContext2D,
-    cameraPerson: { x: number; y: number }
-  ) {
-    ctx.drawImage(
-      this.upperImage,
-      utils.withGrid(10) - cameraPerson.x,
-      utils.withGrid(5) - cameraPerson.y
+      image,
+      utils.withGrid(9.5) - cameraPerson.x,
+      utils.withGrid(6) - cameraPerson.y
     );
   }
 

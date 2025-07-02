@@ -57,12 +57,12 @@ body {
 .game-container {
   display: none;
   position: relative;
-  width: 704px;
-  height: 352px;
   margin: 0 auto;
   padding: 0;
-  transform: scale(2);
+  width: 640px;
+  height: 360px;
 }
+
 .fade-in {
   animation: scene-transition-fade-in 1s forwards;
 }
@@ -77,13 +77,6 @@ body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   -webkit-font-smoothing: none;
-}
-
-/* media queris */
-@media (max-width: 1440px) {
-  .game-container {
-    transform: scale(1.5);
-  }
 }
 
 @media (max-width: 992px) {
