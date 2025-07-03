@@ -67,12 +67,28 @@ export interface EventWrapper {
 //Configs
 export interface SpriteConfig {
   src: string;
-  animations?: Record<string, number[][]>;
+  animations?: Record<string, AnimationFrames | AnimationObj>;
+  feetOffsetY?: number;
+  animationSchedule?: {
+    primary: string;
+    alternate: string;
+    interval: number; // in ms
+    lastSwitch?: number;
+    isInAlternate?: boolean;
+  };
   currentAnimation?: string;
   useShadow?: boolean;
   animationFrameLimit?: number;
   gameObject?: GameObject | Person | Collectable;
+  frameWidth?: number;
+  frameHeight?: number;
 }
+export type AnimationFrames = [number, number][];
+export type AnimationObj = { frames: AnimationFrames; frameLimit?: number };
+
+export type SpriteAnimations =
+  | Record<string, AnimationFrames>
+  | Record<string, AnimationObj>;
 
 export interface GameObjectConfig {
   x: number;
@@ -83,14 +99,30 @@ export interface GameObjectConfig {
   behaviorLoop?: BehaviorEvent[];
   talking?: EventWrapper[];
   takeShroom?: any[];
+  zIndexOffset?: number;
 }
 export interface PersonConfig extends GameObjectConfig {
   isPlayerControlled: boolean;
 }
 
 export interface CollectableConfig extends GameObjectConfig {
+  src?: string;
   useShadow?: boolean;
   isUsed?: boolean;
+}
+export interface StaticElementConfig extends GameObjectConfig {
+  src: string;
+  animations?: Record<string, AnimationFrames | AnimationObj>;
+  frameWidth: number;
+  frameHeight: number;
+  zIndexOffset?: number;
+  animationSchedule?: {
+    primary: string;
+    alternate: string;
+    interval: number; // in ms
+    lastSwitch?: number;
+    isInAlternate?: boolean;
+  };
 }
 export interface MapConfig {
   lowerSrc: string;

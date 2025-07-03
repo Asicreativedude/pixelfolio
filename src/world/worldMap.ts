@@ -42,38 +42,25 @@ export default class WorldMap {
   }
 
   // Draws map layers relative to the camera’s position.
-  // These layers visually “sandwich” the player and objects for depth illusion.
-
-  // drawLowerImage(
-  //   ctx: CanvasRenderingContext2D,
-  //   cameraPerson: { x: number; y: number }
-  // ) {
-  //   ctx.drawImage(
-  //     this.lowerImage,
-  //     utils.withGrid(9.5) - cameraPerson.x,
-  //     utils.withGrid(6) - cameraPerson.y
-  //   );
-  // }
-  // drawUpperImage(
-  //   ctx: CanvasRenderingContext2D,
-  //   cameraPerson: { x: number; y: number }
-  // ) {
-  //   ctx.drawImage(
-  //     this.upperImage,
-  //     utils.withGrid(9.5) - cameraPerson.x,
-  //     utils.withGrid(6) - cameraPerson.y
-  //   );
-  // }
 
   drawImageLayer(
     ctx: CanvasRenderingContext2D,
     cameraPerson: { x: number; y: number },
     image: HTMLImageElement
   ) {
+    const scaledOffsetX = utils.withGrid(9.5) - cameraPerson.x;
+    const scaledOffsetY = utils.withGrid(5) - cameraPerson.y;
+
     ctx.drawImage(
       image,
-      utils.withGrid(9.5) - cameraPerson.x,
-      utils.withGrid(6) - cameraPerson.y
+      0,
+      0,
+      image.width,
+      image.height, // source rect
+      scaledOffsetX,
+      scaledOffsetY, // destination position
+      image.width,
+      image.height // destination size
     );
   }
 

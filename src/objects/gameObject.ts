@@ -19,6 +19,7 @@ export default class GameObject {
   isMounted: boolean; // Indicates if the object is currently mounted on the map
   x: number; // X coordinate on the grid
   y: number; // Y coordinate on the grid
+  zIndexOffset?: number; // Optional z-index offset for rendering order
   direction: string; // Direction the object is facing (e.g., 'up', 'down', 'left', 'right')
   sprite: Sprite; // Visual representation of the object
   behaviorLoop: any[]; // List of actions the object can perform in a loop
@@ -37,7 +38,7 @@ export default class GameObject {
       src: config.src || '',
       useShadow: config.useShadow,
     });
-
+    this.zIndexOffset = config.zIndexOffset || 0;
     this.behaviorLoop = config.behaviorLoop || [];
     this.behaviorLoopIndex = 0;
 

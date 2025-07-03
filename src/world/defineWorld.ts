@@ -4,6 +4,7 @@ import DirectionInput from '../utils/directionInput';
 import CharacterSelection from '../characterSelection';
 import type { GameObjectConfig, HeroInitialState, MapConfig } from '../types';
 import { worldMaps } from './maps';
+import type GameObject from '../objects/gameObject';
 
 export default class World {
   element: HTMLElement;
@@ -32,55 +33,58 @@ export default class World {
   // Sets the camera target to either the hero or npcASI.
   // Updates and draws all game objects sorted by y position (for depth layering).
   // Calls both lower and upper map drawing layers.
+  gameLoopStepWork() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-  startGameLoop() {
-    const step = () => {
-      //cleancanvas
+    //Establish the camera person
+    this.cameraPerson = this.map.gameObjects.hero;
 
-      const currentTime = Date.now();
-      const deltaTime = currentTime - this.time;
-      this.time = currentTime;
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //Focus on NPC Asi if it exists
+    if (this.map.gameObjects.npcASI) {
+      this.cameraPerson = this.map.gameObjects.npcASI;
+    }
 
-      //Establish the camera person
-      this.cameraPerson = this.map.gameObjects.hero;
+    this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.lowerImage);
 
-      //Focus on NPC Asi if it exists
-      if (this.map.gameObjects.npcASI) {
-        this.cameraPerson = this.map.gameObjects.npcASI;
-      }
-
-      //update all objects
-      Object.values(this.map.gameObjects as GameObjectConfig).forEach(
-        (object) => {
-          object.update({
-            arrow: this.directionInput.direction,
-            map: this.map,
-          });
-        }
-      );
-
-      this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.lowerImage);
-
-      //Draw Game Objects
-      Object.values(this.map.gameObjects as GameObjectConfig)
-        .sort((a, b) => {
-          return a.y - b.y;
-        })
-        .forEach((object) => {
-          object.sprite.draw(this.ctx, this.cameraPerson);
-        });
-
-      //Draw Upper Layer
-      this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.upperImage);
-
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          step();
-        }, 60 / deltaTime);
+    //Draw Game Objects
+    Object.values(this.map.gameObjects as GameObject)
+      .sort((a, b) => a.sprite.getZIndex() - b.sprite.getZIndex())
+      .forEach((obj) => {
+        console.log(
+          `Drawing object: ${obj.id} with zIndex ${obj.sprite.getZIndex()}`
+        );
+        obj.sprite.draw(this.ctx, this.cameraPerson);
       });
+
+    //update all objects
+    Object.values(this.map.gameObjects as GameObjectConfig).forEach(
+      (object) => {
+        object.update({
+          arrow: this.directionInput.direction,
+          map: this.map,
+        });
+      }
+    );
+    //Draw Upper Layer
+    this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.upperImage);
+  }
+  startGameLoop() {
+    let previousMs: number;
+    const step = 1 / 60;
+    const stepFn = (timestampMs: number) => {
+      if (previousMs === undefined) {
+        previousMs = timestampMs;
+      }
+      let delta = (timestampMs - previousMs) / 1000;
+      while (delta > step) {
+        this.gameLoopStepWork();
+        delta -= step;
+      }
+      previousMs = timestampMs - delta * 1000;
+      requestAnimationFrame(stepFn);
     };
-    step();
+    // First call to kick off the loop
+    requestAnimationFrame(stepFn);
   }
 
   // Adds an event listener for Enter key or UI dpad button.
@@ -162,17 +166,17 @@ export default class World {
         }, 1000);
         this.isCharacterSelected = true;
         if (this.isCharacterSelected) {
-          this.map.startCutscene([
-            { who: 'hero', type: 'walk', direction: 'up' },
-            { who: 'hero', type: 'walk', direction: 'up' },
-            { who: 'hero', type: 'walk', direction: 'up' },
-            { who: 'hero', type: 'walk', direction: 'up' },
-            { who: 'hero', type: 'stand', direction: 'down' },
-            {
-              type: 'textMessage',
-              text: "Welcome to The Fleishhaker Hall! \n You can go from here to different rooms to explore Asi's world.",
-            },
-          ]);
+          // this.map.startCutscene([
+          //   { who: 'hero', type: 'walk', direction: 'up' },
+          //   { who: 'hero', type: 'walk', direction: 'up' },
+          //   { who: 'hero', type: 'walk', direction: 'up' },
+          //   { who: 'hero', type: 'walk', direction: 'up' },
+          //   { who: 'hero', type: 'stand', direction: 'down' },
+          //   {
+          //     type: 'textMessage',
+          //     text: "Welcome to The Fleishhaker Hall! \n You can go from here to different rooms to explore Asi's world.",
+          //   },
+          // ]);
         }
       });
     });

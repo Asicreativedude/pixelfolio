@@ -8,12 +8,13 @@ import Sprite from '../utils/sprite';
 export default class Collectable extends GameObject {
   useShadow: boolean; // Whether the collectable uses a shadow
   isUsed: boolean; // Whether the collectable has been used
+  src?: string;
 
   constructor(config: CollectableConfig) {
     super(config);
     this.sprite = new Sprite({
       gameObject: this,
-      src: '/images/shroom-test.png',
+      src: this.src || '/images/collectables/shroom.png',
       animations: {
         'not-used': [[0, 0]],
         'used-shroom': [[1, 0]],
