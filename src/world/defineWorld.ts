@@ -50,9 +50,6 @@ export default class World {
     Object.values(this.map.gameObjects as GameObject)
       .sort((a, b) => a.sprite.getZIndex() - b.sprite.getZIndex())
       .forEach((obj) => {
-        console.log(
-          `Drawing object: ${obj.id} with zIndex ${obj.sprite.getZIndex()}`
-        );
         obj.sprite.draw(this.ctx, this.cameraPerson);
       });
 
@@ -67,6 +64,9 @@ export default class World {
     );
     //Draw Upper Layer
     this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.upperImage);
+
+    //Draw Debug Walls
+    this.map.drawWallDebug(this.ctx, this.cameraPerson);
   }
   startGameLoop() {
     let previousMs: number;

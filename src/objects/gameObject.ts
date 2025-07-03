@@ -52,12 +52,14 @@ export default class GameObject {
 
   mount(map: any) {
     this.isMounted = true;
-    map.addWall(this.x, this.y);
+    if (GameObject instanceof Person) {
+      map.addWall(this.x, this.y);
 
-    //If we have a behavior, kick off after a short delay
-    setTimeout(() => {
-      this.doBehaviorEvent(map);
-    }, 10);
+      //If we have a behavior, kick off after a short delay
+      setTimeout(() => {
+        this.doBehaviorEvent(map);
+      }, 10);
+    }
   }
 
   update() {}

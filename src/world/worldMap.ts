@@ -176,6 +176,29 @@ export default class WorldMap {
     const { x, y } = utils.nextPosition(wasX, wasY, direction);
     this.addWall(x, y);
   }
+  /**
+  adds debug rectangles around walls to visualize them.
+   */
+  drawWallDebug(
+    ctx: CanvasRenderingContext2D,
+    cameraPerson: { x: number; y: number }
+  ) {
+    Object.keys(this.walls).forEach((key) => {
+      const [x, y] = key.split(',').map(Number);
+      const scaledOffsetX = Math.floor(
+        x - cameraPerson.x + utils.withGrid(9.5) - 32
+      );
+      const scaledOffsetY =
+        Math.floor(y - cameraPerson.y + utils.withGrid(5)) + 32;
+      ctx.strokeStyle = 'red';
+      ctx.strokeRect(
+        scaledOffsetX,
+        scaledOffsetY,
+        utils.withGrid(1),
+        utils.withGrid(1)
+      );
+    });
+  }
 }
 // define all the maps and their content:
 // Each map includes:
