@@ -4,7 +4,7 @@ import StaticElement from '../objects/staticElements';
 import type { MapConfig } from '../types';
 import utils from '../utils/utils';
 import { extractWallsFromAsepriteJson } from '../utils/parseWallsFromJson';
-import collisionJson from '../../public/HallTest/sprite.json';
+import collisionJson from './mapsData/hallData.json';
 
 const homepageWalls = extractWallsFromAsepriteJson(collisionJson);
 export const worldMaps: Record<string, MapConfig> = {

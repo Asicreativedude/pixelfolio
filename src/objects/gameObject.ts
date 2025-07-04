@@ -52,7 +52,7 @@ export default class GameObject {
 
   mount(map: any) {
     this.isMounted = true;
-    if (GameObject instanceof Person) {
+    if (this instanceof Person) {
       map.addWall(this.x, this.y);
 
       //If we have a behavior, kick off after a short delay
