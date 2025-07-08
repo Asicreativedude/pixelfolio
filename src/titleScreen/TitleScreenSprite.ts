@@ -1,4 +1,4 @@
-import type { SpriteConfig } from '../types';
+import type { TitleSpriteConfig } from '../types';
 
 // Load a sprite sheet (image)
 // Optionally load and draw a shadow
@@ -11,12 +11,11 @@ type AnimationObj = {
   frameHoldTicks?: number;
 };
 
-export default class Sprite {
+export default class TitleScreenSprite {
+  x: number;
+  y: number;
   image: HTMLImageElement; // The sprite sheet image
-  shadow: HTMLImageElement; // The shadow image
-  useShadow: boolean; // Whether to use the shadow
   isLoaded: boolean = false; // Whether the sprite image is loaded
-  isShadowLoaded: boolean = false; // Whether the shadow image is loaded
   animations: { [key: string]: AnimationObj }; // Animation frames for each state
   currentAnimation: string; // The current animation state
   frameIndex: number; // The current frame in the animation
@@ -24,7 +23,6 @@ export default class Sprite {
   frameWidth: number;
   frameHeight: number;
   feetOffsetY: number;
-  gameObject: any;
   animationSchedule?: {
     primary: string;
     alternate: string;
@@ -33,67 +31,20 @@ export default class Sprite {
     isInAlternate?: boolean;
   };
 
-  constructor(config: SpriteConfig) {
+  constructor(config: TitleSpriteConfig) {
     //Setup the image
-
+    this.x = config.x;
+    this.y = config.y;
     this.image = new Image();
     this.image.src = config.src;
     this.image.onload = () => {
       this.isLoaded = true;
     };
-
-    //shadow
-    this.shadow = new Image();
-    this.useShadow = config.useShadow || false;
-
-    if (this.useShadow) {
-      this.shadow.src = '/images/shadow-demo.png';
-    }
-    this.shadow.onload = () => {
-      this.isShadowLoaded = true;
-    };
-
     // Enhanced: normalize animations to objects with frames, frameLimit, etc
     // Accept both new (AnimationObj) and old ([[number, number], ...]) animation formats
     this.animations = {};
-    const animations = config.animations || {
-      'idle-down': { frames: [[0, 0]] },
-      'idle-up': { frames: [[0, 3]] },
-      'idle-left': { frames: [[0, 1]] },
-      'idle-right': { frames: [[0, 2]] },
-      'walk-down': {
-        frames: [
-          [1, 0],
-          [0, 0],
-          [2, 0],
-          [0, 0],
-        ],
-      },
-      'walk-up': {
-        frames: [
-          [1, 3],
-          [0, 3],
-          [2, 3],
-          [0, 3],
-        ],
-      },
-      'walk-left': {
-        frames: [
-          [1, 1],
-          [0, 1],
-          [2, 1],
-          [0, 1],
-        ],
-      },
-      'walk-right': {
-        frames: [
-          [1, 2],
-          [0, 2],
-          [2, 2],
-          [0, 2],
-        ],
-      },
-    };
+    const animations = config.animations || {};
+
     for (const key in animations) {
       const anim = animations[key];
       if (Array.isArray(anim)) {
@@ -102,7 +53,6 @@ export default class Sprite {
         this.animations[key] = anim;
       }
     }
-
     this.currentAnimation =
       config.currentAnimation || Object.keys(this.animations)[0];
     this.frameIndex = 0;
@@ -114,8 +64,6 @@ export default class Sprite {
     this.frameHeight = config.frameHeight || 64;
     this.feetOffsetY = config.feetOffsetY ?? this.frameHeight;
 
-    //Refrence the game object
-    this.gameObject = config.gameObject;
     // Optionally copy animationSchedule from config
     if (config.animationSchedule) {
       this.animationSchedule = { ...config.animationSchedule };
@@ -149,7 +97,6 @@ export default class Sprite {
 
     this.frameProgress = frameLimit;
     this.frameIndex++;
-
     const isLastFrame = this.frameIndex >= animation.frames.length;
     if (isLastFrame) {
       this.frameIndex = 0;
@@ -193,30 +140,15 @@ export default class Sprite {
   // Computes the draw position by offsetting relative to the camera.
   // Draws shadow first (if loaded), then the correct sprite frame.
   // Calls updateScheduledAnimation and updateAnimationProgress to advance the animation.
-  draw(ctx: CanvasRenderingContext2D, cameraPerson: { x: number; y: number }) {
-    const CAMERA_OFFSET_X = ctx.canvas.width / 2 - 16; // Adjusted for the left side of the screen
-    const CAMERA_OFFSET_Y = ctx.canvas.height / 2 + 8; // Adjusted for the top of the screen
-
+  draw(ctx: CanvasRenderingContext2D, x: number, y: number) {
     // Center the sprite within its tile by offsetting by half the frame size
-    let x, y;
-    if (cameraPerson) {
-      x =
-        this.gameObject.x +
-        CAMERA_OFFSET_X -
-        cameraPerson.x -
-        this.frameWidth / 2;
-      y =
-        this.gameObject.y +
-        CAMERA_OFFSET_Y -
-        cameraPerson.y -
-        this.frameHeight / 2;
-    } else {
-      x = this.gameObject.x;
-      y = this.gameObject.y;
-    }
-    this.isShadowLoaded && ctx.drawImage(this.shadow, x - 4, y - 2);
     const animation = this.animations[this.currentAnimation];
+    if (!animation) {
+      this.isLoaded && ctx.drawImage(this.image, x, y);
+      return;
+    }
     const [frameX, frameY] = animation.frames[this.frameIndex];
+
     this.isLoaded &&
       ctx.drawImage(
         this.image,
@@ -231,11 +163,5 @@ export default class Sprite {
       );
     this.updateScheduledAnimation();
     this.updateAnimationProgress();
-  }
-
-  getZIndex() {
-    const feet = this.feetOffsetY ?? 0;
-    const offset = this.gameObject?.zIndexOffset ?? 0;
-    return this.gameObject.y + feet + offset;
   }
 }

@@ -83,6 +83,11 @@ export interface SpriteConfig {
   frameWidth?: number;
   frameHeight?: number;
 }
+
+export interface TitleSpriteConfig extends SpriteConfig {
+  x: number;
+  y: number;
+}
 export type AnimationFrames = [number, number][];
 export type AnimationObj = { frames: AnimationFrames; frameLimit?: number };
 
@@ -110,7 +115,7 @@ export interface CollectableConfig extends GameObjectConfig {
   useShadow?: boolean;
   isUsed?: boolean;
 }
-export interface StaticElementConfig extends GameObjectConfig {
+export interface MapElementsConfig extends GameObjectConfig {
   src: string;
   animations?: Record<string, AnimationFrames | AnimationObj>;
   frameWidth: number;
@@ -124,6 +129,7 @@ export interface StaticElementConfig extends GameObjectConfig {
     isInAlternate?: boolean;
   };
 }
+
 export interface MapConfig {
   lowerSrc: string;
   upperSrc?: string;
@@ -133,3 +139,7 @@ export interface MapConfig {
   beginingCutscene?: CutsceneEvent[];
   projectReveal?: Record<string, any>;
 }
+
+// export interface TitleScreenConfig {
+//   ctx: CanvasRenderingContext2D;
+// }

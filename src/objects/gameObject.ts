@@ -91,7 +91,6 @@ export default class GameObject {
     //Setting up our event with relevant info
     let eventConfig = this.behaviorLoop[this.behaviorLoopIndex];
     eventConfig.who = this.id;
-
     //Create an event instance out of our next event config
     const eventHandler = new WorldEvents({ map, event: eventConfig });
     await eventHandler.init();

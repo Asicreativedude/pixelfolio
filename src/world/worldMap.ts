@@ -6,11 +6,12 @@ import Person from '../objects/person';
 import type { MapConfig } from '../types';
 import type World from './defineWorld';
 import type GameObject from '../objects/gameObject';
+import type MapElements from '../objects/mapElements';
 
 // defines everything related to the game environment — layers, walls, NPCs, player interactions, and map transitions.
 export default class WorldMap {
   world: World | null;
-  gameObjects: Record<string, GameObject | Person | Collectable>;
+  gameObjects: Record<string, GameObject | Person | Collectable | MapElements>;
   cutsceneSpaces: Record<string, any>;
   beginingCutscene: Record<string, any>;
   projectReveal: Record<string, any>;
@@ -48,8 +49,15 @@ export default class WorldMap {
     cameraPerson: { x: number; y: number },
     image: HTMLImageElement
   ) {
-    const scaledOffsetX = utils.withGrid(9.5) - cameraPerson.x;
-    const scaledOffsetY = utils.withGrid(5) - cameraPerson.y;
+    let scaledOffsetX, scaledOffsetY;
+
+    if (cameraPerson) {
+      scaledOffsetX = utils.withGrid(9.5) - cameraPerson.x;
+      scaledOffsetY = utils.withGrid(5) - cameraPerson.y;
+    } else {
+      scaledOffsetX = utils.withGrid(0);
+      scaledOffsetY = utils.withGrid(0);
+    }
 
     ctx.drawImage(
       image,
@@ -125,6 +133,7 @@ export default class WorldMap {
 
   checkForActionCutscene() {
     const hero = this.gameObjects['hero'];
+    if (!hero) return;
     const nextCoords = utils.nextPosition(hero.x, hero.y, hero.direction);
     const match = Object.values(this.gameObjects).find((object) => {
       return `${object.x},${object.y}` === `${nextCoords.x},${nextCoords.y}`;

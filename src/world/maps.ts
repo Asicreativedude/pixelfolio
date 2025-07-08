@@ -1,14 +1,14 @@
 import Collectable from '../objects/collectables';
 import Person from '../objects/person';
-import StaticElement from '../objects/staticElements';
 import type { MapConfig } from '../types';
 import utils from '../utils/utils';
-import { extractWallsFromAsepriteJson } from '../utils/parseWallsFromJson';
+import { extractWallsFromAsepriteJson } from '../utils/extractWallsFromAsepriteJson';
 import collisionJson from './mapsData/hallData.json';
+import MapElements from '../objects/mapElements';
 
-const homepageWalls = extractWallsFromAsepriteJson(collisionJson);
+const hallWalls = extractWallsFromAsepriteJson(collisionJson);
 export const worldMaps: Record<string, MapConfig> = {
-  Homepage: {
+  Hall: {
     lowerSrc: '../../Hall2.png',
     gameObjects: {
       hero: new Person({
@@ -101,7 +101,7 @@ export const worldMaps: Record<string, MapConfig> = {
           },
         ],
       }),
-      hologram: new StaticElement({
+      hologram: new MapElements({
         x: utils.withGrid(12),
         y: utils.withGrid(7),
         src: '../../hallHologram.png',
@@ -151,7 +151,7 @@ export const worldMaps: Record<string, MapConfig> = {
           interval: 7000,
         },
       }),
-      hologramBase: new StaticElement({
+      hologramBase: new MapElements({
         x: utils.withGrid(12),
         y: utils.withGrid(7),
         src: '../../hallHologramBase.png',
@@ -160,7 +160,7 @@ export const worldMaps: Record<string, MapConfig> = {
         zIndexOffset: -128,
       }),
     },
-    walls: homepageWalls,
+    walls: hallWalls,
     cutsceneSpaces: {
       // [utils.asGridCoord(38, 4)]: [
       //   {
@@ -349,7 +349,7 @@ export const worldMaps: Record<string, MapConfig> = {
           events: [
             {
               type: 'changeMap',
-              map: 'Homepage',
+              map: 'Hall',
               x: utils.withGrid(13),
               y: utils.withGrid(17),
               direction: 'up',
@@ -504,7 +504,7 @@ export const worldMaps: Record<string, MapConfig> = {
           events: [
             {
               type: 'changeMap',
-              map: 'Homepage',
+              map: 'Hall',
               x: utils.withGrid(1),
               y: utils.withGrid(13),
               direction: 'right',
@@ -517,7 +517,7 @@ export const worldMaps: Record<string, MapConfig> = {
           events: [
             {
               type: 'changeMap',
-              map: 'Homepage',
+              map: 'Hall',
               x: utils.withGrid(1),
               y: utils.withGrid(12),
               direction: 'right',
@@ -725,7 +725,7 @@ export const worldMaps: Record<string, MapConfig> = {
           events: [
             {
               type: 'changeMap',
-              map: 'Homepage',
+              map: 'Hall',
               x: utils.withGrid(1),
               y: utils.withGrid(5),
               direction: 'right',
@@ -738,7 +738,7 @@ export const worldMaps: Record<string, MapConfig> = {
           events: [
             {
               type: 'changeMap',
-              map: 'Homepage',
+              map: 'Hall',
               x: utils.withGrid(1),
               y: utils.withGrid(5),
               direction: 'right',
@@ -970,7 +970,7 @@ export const worldMaps: Record<string, MapConfig> = {
           events: [
             {
               type: 'changeMap',
-              map: 'Homepage',
+              map: 'Hall',
               x: utils.withGrid(19),
               y: utils.withGrid(1),
               direction: 'down',
@@ -983,7 +983,7 @@ export const worldMaps: Record<string, MapConfig> = {
           events: [
             {
               type: 'changeMap',
-              map: 'Homepage',
+              map: 'Hall',
               x: utils.withGrid(19),
               y: utils.withGrid(1),
               direction: 'down',
@@ -996,7 +996,7 @@ export const worldMaps: Record<string, MapConfig> = {
           events: [
             {
               type: 'changeMap',
-              map: 'Homepage',
+              map: 'Hall',
               x: utils.withGrid(19),
               y: utils.withGrid(1),
               direction: 'down',

@@ -1,7 +1,7 @@
 import WorldMap from './worldMap';
 import KeyPressListener from '../utils/keyPressListener';
 import DirectionInput from '../utils/directionInput';
-import CharacterSelection from '../characterSelection';
+// import CharacterSelection from '../characterSelection';
 import type { GameObjectConfig, HeroInitialState, MapConfig } from '../types';
 import { worldMaps } from './maps';
 import type GameObject from '../objects/gameObject';
@@ -11,13 +11,16 @@ export default class World {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   map: any;
+  titleScreen: any;
   isCharacterSelected: boolean;
   cameraPerson: any;
   directionInput!: DirectionInput;
   time: number = Date.now();
+  isGameRunning: boolean;
 
   //Gets a canvas to render the world on, defines a context to draw on.
   constructor(config: { element: HTMLElement }) {
+    this.isGameRunning = false;
     this.element = config.element;
     this.canvas = this.element.querySelector(
       '.game-canvas'
@@ -35,7 +38,6 @@ export default class World {
   // Calls both lower and upper map drawing layers.
   gameLoopStepWork() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
     //Establish the camera person
     this.cameraPerson = this.map.gameObjects.hero;
 
@@ -68,6 +70,7 @@ export default class World {
     //Draw Debug Walls
     this.map.drawWallDebug(this.ctx, this.cameraPerson);
   }
+
   startGameLoop() {
     let previousMs: number;
     const step = 1 / 60;
@@ -153,13 +156,14 @@ export default class World {
 
     document.querySelectorAll('.charBtn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        worldMaps.Homepage.gameObjects.hero.sprite.image.src =
+        worldMaps.Hall.gameObjects.hero.sprite.image.src =
           worldMaps.ProjectsPage.gameObjects.hero.sprite.image.src =
           worldMaps.OutsideWorld.gameObjects.hero.sprite.image.src =
           worldMaps.AboutPage.gameObjects.hero.sprite.image.src =
           worldMaps.ContactPage.gameObjects.hero.sprite.image.src =
           worldMaps.ThreedWorld.gameObjects.hero.sprite.image.src =
             String(`${btn.getAttribute('data-button')}`);
+        // './characters/iluz.png';
         selection.classList.add('fade-out');
         setTimeout(() => {
           selection.style.display = 'none';
@@ -209,18 +213,20 @@ export default class World {
     }, 50);
   }
 
-  // Loads the default map (Homepage).
+  // Loads the default map (Hall).
   // Initializes input (keyboard direction).
   // Loads the character selection screen.
   // Binds actions (Enter key, touchpad).
   // Starts the game loop.
 
   init(): void {
-    this.startMap(worldMaps.Homepage);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.startMap(worldMaps.Hall);
+
     this.directionInput = new DirectionInput();
     this.directionInput.init();
-    const chooseHero = new CharacterSelection();
-    chooseHero.init(document.querySelector('.game-container')!);
+    // const chooseHero = new CharacterSelection();
+    // chooseHero.init(document.querySelector('.game-container')!);
     this.chooseBetweenCharacter();
 
     this.bindActionInput();

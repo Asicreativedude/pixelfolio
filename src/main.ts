@@ -1,13 +1,14 @@
 import './styles/global.css';
-import './styles/characterSelection.css';
+// import './styles/characterSelection.css';
 import './styles/contactDetails.css';
 import './styles/projectReveal.css';
 import './styles/sceneTransition.css';
 import './styles/textMessage.css';
-import './styles/titleScreen.css';
-
-import './titleScreen';
+// import './styles/titleScreen.css';
+// import World from './world/defineWorld';
+// import './welcomeScreen';
 import Stats from 'stats.js';
+import TitleScreen from './titleScreen/TitleScreen';
 
 const stats = new Stats();
 stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -29,3 +30,13 @@ function scaleGameContainer() {
 
 window.addEventListener('load', scaleGameContainer);
 window.addEventListener('resize', scaleGameContainer);
+
+const gameContainer = document.querySelector('.game-container') as HTMLElement;
+
+setTimeout(() => {
+  gameContainer.style.display = 'block';
+
+  const titleScreen = new TitleScreen(gameContainer);
+  titleScreen.init();
+  gameContainer.classList.add('fade-in');
+}, 1000);
