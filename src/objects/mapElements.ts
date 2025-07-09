@@ -1,5 +1,5 @@
-import type { MapElementsConfig } from '../types';
 import GameObject from './gameObject';
+import type { MapElementsConfig } from '../types';
 import Sprite from '../utils/sprite';
 
 // Collectable class extends gameObject to represent items that can be collected in the game.

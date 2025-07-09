@@ -1,5 +1,5 @@
 import Sprite from '../utils/sprite';
-const WorldEvents = (await import('../world/events/worldEvents')).default;
+import WorldEvents from '../world/events/worldEvents';
 import type { GameObjectConfig } from '../types';
 
 // Defines a base class for any object that appears on the game map, such as the player, NPCs, or items.

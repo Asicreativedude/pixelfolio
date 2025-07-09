@@ -5,7 +5,6 @@ import TextMessage from './textMessage';
 import type WorldMap from '../worldMap';
 import SceneTransition from './sceneTransition';
 import { worldMaps } from '../maps';
-import Person from '../../objects/person';
 
 // import { Howl } from 'howler';
 
@@ -26,7 +25,8 @@ export default class WorldEvent {
 
   stand(resolve: () => void) {
     const who = this.map.gameObjects[this.event.who];
-    who instanceof Person &&
+    who.isPerson &&
+      'startBehavior' in who &&
       who.startBehavior(
         {
           map: this.map,
@@ -51,7 +51,8 @@ export default class WorldEvent {
 
   walk(resolve: () => void) {
     const who = this.map.gameObjects[this.event.who];
-    who instanceof Person &&
+    who.isPerson &&
+      'startBehavior' in who &&
       who.startBehavior(
         { map: this.map },
         {

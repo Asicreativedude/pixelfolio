@@ -1,6 +1,5 @@
 import TitleScreenSprite from './TitleScreenSprite';
 import utils from '../utils/utils';
-import { worldMaps } from '../world/maps';
 import World from '../world/defineWorld';
 
 export default class CharacterSelection {
@@ -79,15 +78,20 @@ export default class CharacterSelection {
           : (bg.animations.charBG.frames = [[0, 0]]);
       });
     } else if (e.key === 'Enter') {
-      worldMaps.Hall.gameObjects.hero.sprite.image.src =
-        worldMaps.ProjectsPage.gameObjects.hero.sprite.image.src =
-        worldMaps.OutsideWorld.gameObjects.hero.sprite.image.src =
-        worldMaps.AboutPage.gameObjects.hero.sprite.image.src =
-        worldMaps.ContactPage.gameObjects.hero.sprite.image.src =
-        worldMaps.ThreedWorld.gameObjects.hero.sprite.image.src =
-          String(`${this.charSprites[this.selectedChar]}`);
+      // worldMaps.Hall.gameObjects.hero.sprite.image.src =
+      //   worldMaps.ProjectsPage.gameObjects.hero.sprite.image.src =
+      //   worldMaps.OutsideWorld.gameObjects.hero.sprite.image.src =
+      //   worldMaps.AboutPage.gameObjects.hero.sprite.image.src =
+      //   worldMaps.ContactPage.gameObjects.hero.sprite.image.src =
+      //   worldMaps.ThreedWorld.gameObjects.hero.sprite.image.src =
+      //     String(`${this.charSprites[this.selectedChar]}`);
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.gameInit(this.gameContainer);
+      const world = new World({
+        element: this.gameContainer,
+        // heroSprite: this.charSprites[this.selectedChar],
+      });
+      world.init();
+      // this.gameInit(this.gameContainer);
       return;
     }
     this.drawTitleScreen();
@@ -99,12 +103,9 @@ export default class CharacterSelection {
     });
   }
 
-  gameInit(gameContainer: HTMLElement) {
-    const world = new World({
-      element: gameContainer,
-    });
-    world.init();
-  }
+  // gameInit(gameContainer: HTMLElement) {
+
+  // }
 
   init(): void {
     window.addEventListener('keydown', (e) => this.handleInput(e));
@@ -113,7 +114,9 @@ export default class CharacterSelection {
       bg.draw(this.ctx, bg.x, bg.y);
       const charImage = new Image();
       charImage.src = this.charImages[index];
-      this.ctx.drawImage(charImage, bg.x, bg.y);
+      charImage.onload = () => {
+        this.ctx.drawImage(charImage, bg.x, bg.y);
+      };
     });
   }
 }

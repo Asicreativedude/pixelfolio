@@ -9,6 +9,7 @@ export default class Collectable extends GameObject {
   useShadow: boolean; // Whether the collectable uses a shadow
   isUsed: boolean; // Whether the collectable has been used
   src?: string;
+  isCollectable: boolean = true; // Indicates if the object is collectable
 
   constructor(config: CollectableConfig) {
     super(config);

@@ -54,55 +54,55 @@ export default class DirectionInput {
         this.heldDirections.splice(index, 1);
       }
     });
-    document
-      .querySelector('.dpad-button')!
-      .addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-      });
-    const removePressedAll = () => {
-      document.querySelectorAll('.dpad-button').forEach((d) => {
-        d.classList.remove('pressed');
-      });
-    };
+    // document
+    //   .querySelector('.dpad-button')!
+    //   .addEventListener('contextmenu', (e) => {
+    //     e.preventDefault();
+    //   });
+    // const removePressedAll = () => {
+    //   document.querySelectorAll('.dpad-button').forEach((d) => {
+    //     d.classList.remove('pressed');
+    //   });
+    // };
 
-    const handleDpadPress = (mobileDirections: string, click: boolean) => {
-      if (click) {
-        this.isPressed = true;
-      }
-      this.heldDirections = this.isPressed ? [mobileDirections] : [];
+    // const handleDpadPress = (mobileDirections: string, click: boolean) => {
+    //   if (click) {
+    //     this.isPressed = true;
+    //   }
+    //   this.heldDirections = this.isPressed ? [mobileDirections] : [];
 
-      if (this.isPressed) {
-        removePressedAll();
-        document
-          .querySelector('.dpad-' + mobileDirections)!
-          .classList.add('pressed');
-      }
-    };
-    document.body.addEventListener('mouseup', () => {
-      this.isPressed = false;
-      this.heldDirections = [];
-      removePressedAll();
-    });
+    //   if (this.isPressed) {
+    //     removePressedAll();
+    //     document
+    //       .querySelector('.dpad-' + mobileDirections)!
+    //       .classList.add('pressed');
+    //   }
+    // };
+    // document.body.addEventListener('mouseup', () => {
+    //   this.isPressed = false;
+    //   this.heldDirections = [];
+    //   removePressedAll();
+    // });
 
-    //Bind a ton of events for the dpad
-    document.querySelector('.dpad-left')!.addEventListener('touchstart', () => {
-      handleDpadPress(this.mobileDirections.left, true);
-    });
+    // //Bind a ton of events for the dpad
+    // document.querySelector('.dpad-left')!.addEventListener('touchstart', () => {
+    //   handleDpadPress(this.mobileDirections.left, true);
+    // });
 
-    document
-      .querySelector('.dpad-up')!
-      .addEventListener('touchstart', () =>
-        handleDpadPress(this.mobileDirections.up, true)
-      );
-    document
-      .querySelector('.dpad-right')!
-      .addEventListener('touchstart', () =>
-        handleDpadPress(this.mobileDirections.right, true)
-      );
-    document
-      .querySelector('.dpad-down')!
-      .addEventListener('touchstart', () =>
-        handleDpadPress(this.mobileDirections.down, true)
-      );
+    // document
+    //   .querySelector('.dpad-up')!
+    //   .addEventListener('touchstart', () =>
+    //     handleDpadPress(this.mobileDirections.up, true)
+    //   );
+    // document
+    //   .querySelector('.dpad-right')!
+    //   .addEventListener('touchstart', () =>
+    //     handleDpadPress(this.mobileDirections.right, true)
+    //   );
+    // document
+    //   .querySelector('.dpad-down')!
+    //   .addEventListener('touchstart', () =>
+    //     handleDpadPress(this.mobileDirections.down, true)
+    //   );
   }
 }

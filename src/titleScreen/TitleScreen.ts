@@ -1,5 +1,5 @@
 import utils from '../utils/utils';
-import CharacterSelection from './characterSelection';
+// import CharacterSelection from './characterSelection';
 import TitleScreenSprite from './TitleScreenSprite';
 
 type TitleOption = {
@@ -18,7 +18,7 @@ export default class TitleScreen {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   gameStarted: boolean;
-  charSelect: CharacterSelection;
+  // charSelect: CharacterSelection;
 
   constructor(gameContainer: HTMLElement) {
     this.gameStarted = false;
@@ -30,9 +30,21 @@ export default class TitleScreen {
         label: 'Start Game',
         x: 204,
         y: 187,
-        action: () => {
+        action: async () => {
+          console.log('Start Game selected!');
           this.gameStarted = true;
-          this.charSelect.init();
+          try {
+            const module = await import('./characterSelection');
+            console.log('CharacterSelection module loaded');
+            const CharacterSelection = module.default;
+            const charSelect = new CharacterSelection(gameContainer);
+            charSelect.init();
+          } catch (err) {
+            console.error(
+              'Failed to load character selection:',
+              err instanceof Error ? err.stack : err
+            );
+          }
         },
       },
       {
@@ -95,7 +107,6 @@ export default class TitleScreen {
     });
     this.titleTexts = new Image();
     this.titleTexts.src = '../../titleScreenText.png';
-    this.charSelect = new CharacterSelection(gameContainer);
   }
 
   drawTitleScreen() {

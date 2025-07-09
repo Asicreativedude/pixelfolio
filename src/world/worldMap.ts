@@ -1,17 +1,11 @@
 import utils from '../utils/utils';
 import WorldEvents from './events/worldEvents';
-// Ensure the correct path to the Collectable module
-import Collectable from '../objects/collectables';
-import Person from '../objects/person';
 import type { MapConfig } from '../types';
-import type World from './defineWorld';
-import type GameObject from '../objects/gameObject';
-import type MapElements from '../objects/mapElements';
 
 // defines everything related to the game environment — layers, walls, NPCs, player interactions, and map transitions.
 export default class WorldMap {
-  world: World | null;
-  gameObjects: Record<string, GameObject | Person | Collectable | MapElements>;
+  world: any; // Reference to the world object, can be used for global state or methods
+  gameObjects: Record<string, any>;
   cutsceneSpaces: Record<string, any>;
   beginingCutscene: Record<string, any>;
   projectReveal: Record<string, any>;
@@ -119,7 +113,7 @@ export default class WorldMap {
         object.doBehaviorEvent(this);
       }
       //Reset NPCs to do their walking behavior (if they are still and waiting)
-      if (object instanceof Person && object.movingProgressRemaining === 0) {
+      if (object.isPerson && object.movingProgressRemaining === 0) {
         object.doBehaviorEvent(this);
       }
     });
@@ -127,9 +121,9 @@ export default class WorldMap {
 
   // Triggered when the player presses the action button.
   // Looks for:
-  //	 Talking interactions with NPCs.
-  //	 “Take shroom” events (limited-time item use).
-  //	 Project reveals based on hero’s current position.
+  // 	 Talking interactions with NPCs.
+  // 	 “Take shroom” events (limited-time item use).
+  // 	 Project reveals based on hero’s current position.
 
   checkForActionCutscene() {
     const hero = this.gameObjects['hero'];
@@ -146,7 +140,7 @@ export default class WorldMap {
       !this.isCutscenePlaying &&
       match &&
       match.takeShroom.length &&
-      match instanceof Collectable
+      match.isCollectable
     ) {
       this.startCutscene(match.takeShroom[0].events);
       match.isUsed = true;
