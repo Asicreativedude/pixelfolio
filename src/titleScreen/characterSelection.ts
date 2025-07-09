@@ -1,6 +1,7 @@
 import TitleScreenSprite from './TitleScreenSprite';
 import utils from '../utils/utils';
 import World from '../world/defineWorld';
+import { worldMaps } from '../world/maps';
 
 export default class CharacterSelection {
   gameContainer: HTMLElement;
@@ -10,6 +11,8 @@ export default class CharacterSelection {
   selectedChar: number;
   charImages: string[];
   charSprites: string[];
+  boundHandleInput!: (e: KeyboardEvent) => void;
+  preloadedImages: HTMLImageElement[] = [];
 
   constructor(gameContainer: HTMLElement) {
     this.gameContainer = gameContainer;
@@ -78,45 +81,53 @@ export default class CharacterSelection {
           : (bg.animations.charBG.frames = [[0, 0]]);
       });
     } else if (e.key === 'Enter') {
-      // worldMaps.Hall.gameObjects.hero.sprite.image.src =
-      //   worldMaps.ProjectsPage.gameObjects.hero.sprite.image.src =
-      //   worldMaps.OutsideWorld.gameObjects.hero.sprite.image.src =
-      //   worldMaps.AboutPage.gameObjects.hero.sprite.image.src =
-      //   worldMaps.ContactPage.gameObjects.hero.sprite.image.src =
-      //   worldMaps.ThreedWorld.gameObjects.hero.sprite.image.src =
-      //     String(`${this.charSprites[this.selectedChar]}`);
+      worldMaps.Hall.gameObjects.hero.sprite.image.src = String(
+        `${this.charSprites[this.selectedChar]}`
+      );
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       const world = new World({
         element: this.gameContainer,
-        // heroSprite: this.charSprites[this.selectedChar],
       });
       world.init();
-      // this.gameInit(this.gameContainer);
+      this.destroy();
       return;
     }
     this.drawTitleScreen();
   }
   drawTitleScreen() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.charachterBG.forEach((bg) => {
+    this.charachterBG.forEach((bg, index) => {
       bg.draw(this.ctx, bg.x, bg.y);
+      const charImage = this.preloadedImages[index];
+      console.log(charImage.complete);
+      if (charImage.complete) {
+        this.ctx.drawImage(charImage, bg.x, bg.y);
+      }
     });
   }
 
-  // gameInit(gameContainer: HTMLElement) {
-
-  // }
-
   init(): void {
-    window.addEventListener('keydown', (e) => this.handleInput(e));
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.charachterBG.forEach((bg, index) => {
-      bg.draw(this.ctx, bg.x, bg.y);
-      const charImage = new Image();
-      charImage.src = this.charImages[index];
-      charImage.onload = () => {
-        this.ctx.drawImage(charImage, bg.x, bg.y);
-      };
+    this.boundHandleInput = this.handleInput.bind(this);
+    window.addEventListener('keydown', this.boundHandleInput);
+
+    const promises = this.charImages.map((src, index) => {
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => resolve();
+        this.preloadedImages[index] = img;
+      });
     });
+
+    Promise.all(promises).then(() => {
+      this.drawTitleScreen();
+    });
+  }
+
+  destroy(): void {
+    if (this.boundHandleInput) {
+      window.removeEventListener('keydown', this.boundHandleInput);
+    }
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 }

@@ -1,5 +1,5 @@
 import utils from '../utils/utils';
-// import CharacterSelection from './characterSelection';
+import CharacterSelection from './characterSelection';
 import TitleScreenSprite from './TitleScreenSprite';
 
 type TitleOption = {
@@ -18,7 +18,7 @@ export default class TitleScreen {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   gameStarted: boolean;
-  // charSelect: CharacterSelection;
+  boundHandleInput!: (e: KeyboardEvent) => void;
 
   constructor(gameContainer: HTMLElement) {
     this.gameStarted = false;
@@ -33,18 +33,9 @@ export default class TitleScreen {
         action: async () => {
           console.log('Start Game selected!');
           this.gameStarted = true;
-          try {
-            const module = await import('./characterSelection');
-            console.log('CharacterSelection module loaded');
-            const CharacterSelection = module.default;
-            const charSelect = new CharacterSelection(gameContainer);
-            charSelect.init();
-          } catch (err) {
-            console.error(
-              'Failed to load character selection:',
-              err instanceof Error ? err.stack : err
-            );
-          }
+          const charSelect = new CharacterSelection(gameContainer);
+          charSelect.init();
+          this.destroy();
         },
       },
       {
@@ -151,13 +142,26 @@ export default class TitleScreen {
 
   init(): void {
     this.startTitleLoop();
-    window.addEventListener('keydown', (e) => {
+    this.boundHandleInput = (e: KeyboardEvent) => {
       if (this.gameStarted) return;
       this.handleInput(e, this.titleOptions);
-    });
+    };
+    window.addEventListener('keydown', this.boundHandleInput);
   }
 
-  //   destroy(): void {
-  //     this.remove();
-  //   }
+  destroy(): void {
+    // Stop drawing by setting gameStarted to true
+    this.gameStarted = true;
+
+    // Clear canvas
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Remove key listener
+    window.removeEventListener('keydown', this.boundHandleInput);
+
+    // Null out references (optional cleanup)
+    // this.arrowSprite = null;
+    // this.titleSprite = null;
+    // this.titleTexts = null;
+  }
 }
