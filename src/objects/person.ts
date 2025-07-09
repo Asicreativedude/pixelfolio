@@ -1,10 +1,9 @@
-import GameObjects from './gameObject';
 import utils from '../utils/utils';
 import type { PersonConfig } from '../types';
+import GameObject from './gameObject';
 
-export default class Person extends GameObjects {
+export default class Person extends GameObject {
   // Inherits from gameObject and adds:
-
   movingProgressRemaining: number; // How many pixels left to move during a walk
   isStanding: boolean; // Whether the object is currently standing (idle)
   isWalking: boolean; // Whether the object is currently walking
@@ -14,6 +13,7 @@ export default class Person extends GameObjects {
   standBehaviorTimeout: ReturnType<typeof setTimeout> | undefined;
 
   constructor(config: PersonConfig) {
+    config.isPerson = true;
     super(config);
     this.movingProgressRemaining = 0;
     this.isStanding = false;

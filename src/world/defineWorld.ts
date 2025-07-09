@@ -1,7 +1,6 @@
 import WorldMap from './worldMap';
 import KeyPressListener from '../utils/keyPressListener';
 import DirectionInput from '../utils/directionInput';
-// import CharacterSelection from '../characterSelection';
 import type { GameObjectConfig, HeroInitialState, MapConfig } from '../types';
 import { worldMaps } from './maps';
 import type GameObject from '../objects/gameObject';

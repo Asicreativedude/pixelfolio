@@ -1,4 +1,3 @@
-import Person from '../../objects/person';
 import utils from '../../utils/utils';
 import ContactDetails from './contactDetails';
 import RevealProject from './revealProject';
@@ -6,6 +5,7 @@ import TextMessage from './textMessage';
 import type WorldMap from '../worldMap';
 import SceneTransition from './sceneTransition';
 import { worldMaps } from '../maps';
+import Person from '../../objects/person';
 
 // import { Howl } from 'howler';
 

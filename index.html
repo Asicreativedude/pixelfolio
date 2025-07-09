@@ -2,15 +2,21 @@
 <html>
   <head>
     <title>Asi Portfolio</title>
-    <script src="https://cdn.jsdelivr.net/npm/pace-js@latest/pace.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/pace-js@latest/pace.min.js"></script>
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/pace-js@latest/pace-theme-default.min.css" />
+      href="https://cdn.jsdelivr.net/npm/pace-js@latest/pace-theme-default.min.css" /> -->
   </head>
   <body>
-    <div class="game-container">
+    <div class="game-container" style="background: blue">
       <canvas class="game-canvas" width="640" height="360"></canvas>
-      <div class="mobileButtons-container">
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+
+<!-- <div class="mobileButtons-container">
         <div class="buttons-movment">
           <button class="dpad-button dpad-left" data-btn="a">
             <img src="./buttons/upMobile.svg" />
@@ -34,9 +40,8 @@
             <img src="./buttons/Enter.png" />
           </div>
         </div>
-      </div>
-    </div>
-    <!-- <div class="titleScreen-wrapper">
+      </div> -->
+<!-- <div class="titleScreen-wrapper">
       <div class="titleScreen">
         <div class="title-wrapper">
           <div class="text-wrapper">
@@ -102,8 +107,7 @@
         src="../static/Artworks/FuckU.mp4"></video>
     </div> -->
 
-    <!-- <script>
-      if (screen.availHeight > screen.availWidth) {
+<!-- <script> if (screen.availHeight > screen.availWidth) {
         document.querySelector('.titleScreen-wrapper').classList.add('hidden');
       }
       window.addEventListener('orientationchange', (event) => {
@@ -118,6 +122,3 @@
         }, 500);
       });
     </script> -->
-    <script type="module" src="/src/main.ts"></script>
-  </body>
-</html>

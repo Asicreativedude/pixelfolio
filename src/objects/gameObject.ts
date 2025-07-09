@@ -1,7 +1,6 @@
 import Sprite from '../utils/sprite';
-import WorldEvents from '../world/events/worldEvents';
+const WorldEvents = (await import('../world/events/worldEvents')).default;
 import type { GameObjectConfig } from '../types';
-import Person from './person';
 
 // Defines a base class for any object that appears on the game map, such as the player, NPCs, or items.
 // It provides a shared structure and behavior system for dynamic in-game entities.
@@ -26,6 +25,7 @@ export default class GameObject {
   behaviorLoopIndex: number; // Current index in the behavior loop
   talking: any[]; // List of cutscene interactions for the object
   takeShroom: any[]; // Custom interaction for a special event
+  isPerson: boolean = false;
 
   constructor(config: GameObjectConfig) {
     this.id = null;
@@ -44,6 +44,7 @@ export default class GameObject {
 
     this.talking = config.talking || [];
     this.takeShroom = config.takeShroom || [];
+    this.isPerson = config.isPerson || false;
   }
 
   // Marks the object as mounted.
@@ -52,7 +53,7 @@ export default class GameObject {
 
   mount(map: any) {
     this.isMounted = true;
-    if (this instanceof Person) {
+    if (this.isPerson) {
       map.addWall(this.x, this.y);
 
       //If we have a behavior, kick off after a short delay
@@ -82,8 +83,8 @@ export default class GameObject {
     if (
       map.isCutscenePlaying ||
       this.behaviorLoop.length === 0 ||
-      (this instanceof Person && this.isStanding) ||
-      (this instanceof Person && this.isWalking)
+      (this.isPerson && (this as any).isStanding) ||
+      (this.isPerson && (this as any).isWalking)
     ) {
       return;
     }

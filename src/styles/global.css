@@ -60,6 +60,8 @@ body {
   margin: 0 auto;
   padding: 0;
   width: 640px;
+  background: #222;
+  border: 1px solid red;
   height: 360px;
 }
 

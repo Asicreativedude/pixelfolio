@@ -105,9 +105,11 @@ export interface GameObjectConfig {
   talking?: EventWrapper[];
   takeShroom?: any[];
   zIndexOffset?: number;
+  isPerson?: boolean;
 }
 export interface PersonConfig extends GameObjectConfig {
   isPlayerControlled: boolean;
+  isPerson?: boolean;
 }
 
 export interface CollectableConfig extends GameObjectConfig {

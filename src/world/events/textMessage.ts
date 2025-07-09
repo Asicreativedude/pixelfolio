@@ -12,10 +12,12 @@ export default class TextMessage {
   revealingText: RevealingText;
   actionListener: KeyPressListener;
 
-  constructor({ text, onComplete }) {
+  constructor({ text, onComplete }: { text: string; onComplete: () => void }) {
     this.text = text;
     this.onComplete = onComplete;
     this.element = null;
+    this.revealingText = null as any; //Will be initialized later
+    this.actionListener = null as any; //Will be initialized later
   }
 
   createElement() {
