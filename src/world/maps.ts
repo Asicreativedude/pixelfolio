@@ -1,164 +1,202 @@
-// import Collectable from '../objects/collectables';
-import Person from '../objects/person';
-// import type { MapConfig } from '../types';
 import utils from '../utils/utils';
 import { extractWallsFromAsepriteJson } from '../utils/extractWallsFromAsepriteJson';
 import collisionJson from './mapsData/hallData.json';
 import MapElements from '../objects/mapElements';
+import type GameObject from '../objects/gameObject';
+import Person from '../objects/person';
+
+type GameObjectConfig = {
+  type: 'Person' | 'Collectable' | 'MapElement'; // Add other types as needed
+  x: number;
+  y: number;
+  isPlayerControlled?: boolean;
+  // Add any other shared config properties needed
+  [key: string]: any;
+};
+export const heroInitialState: GameObjectConfig = {
+  type: 'Person',
+  useShadow: true,
+  isPlayerControlled: true,
+  x: utils.withGrid(10),
+  y: utils.withGrid(6),
+  src: '',
+};
+export const hallBaseObjects: Record<string, GameObjectConfig> = {
+  hero: heroInitialState,
+  npcA: {
+    type: 'Person',
+    useShadow: true,
+    isPlayerControlled: false,
+    x: utils.withGrid(24),
+    y: utils.withGrid(9),
+    src: '../../characters/chich.png',
+    behaviorLoop: [
+      { type: 'stand', direction: 'left', time: 800 },
+      { type: 'stand', direction: 'up', time: 800 },
+      { type: 'stand', direction: 'right', time: 1200 },
+      { type: 'stand', direction: 'up', time: 300 },
+    ],
+    talking: [
+      {
+        events: [
+          {
+            type: 'textMessage',
+            text: "Welcome to Asi's World!",
+            faceHero: 'npcA',
+          },
+          { type: 'textMessage', text: 'NOW LEAVE U FOOL!!!!1' },
+        ],
+      },
+    ],
+  },
+  npcB: {
+    type: 'Person',
+    useShadow: true,
+    isPlayerControlled: false,
+    x: utils.withGrid(3),
+    y: utils.withGrid(3),
+    src: '../../characters/iluz.png',
+    behaviorLoop: [
+      { type: 'stand', direction: 'right', time: 800 },
+      { type: 'stand', direction: 'down', time: 800 },
+      { type: 'stand', direction: 'left', time: 800 },
+      { type: 'stand', direction: 'up', time: 800 },
+    ],
+    talking: [
+      {
+        events: [
+          {
+            type: 'textMessage',
+            text: 'bro, I got this scam come come',
+            faceHero: 'npcC',
+          },
+          { type: 'textMessage', text: 'TROLOLOLO ya nooobbb GGEZ' },
+        ],
+      },
+    ],
+  },
+  npcC: {
+    type: 'Person',
+    useShadow: true,
+    isPlayerControlled: false,
+    x: utils.withGrid(5),
+    y: utils.withGrid(14),
+    src: '../../characters/iluz.png',
+    behaviorLoop: [
+      { type: 'walk', direction: 'right' },
+      { type: 'walk', direction: 'right' },
+      { type: 'walk', direction: 'right' },
+      { type: 'walk', direction: 'right' },
+      { type: 'walk', direction: 'right' },
+      { type: 'stand', direction: 'down', time: 800 },
+      { type: 'walk', direction: 'left' },
+      { type: 'walk', direction: 'left' },
+      { type: 'walk', direction: 'left' },
+      { type: 'walk', direction: 'left' },
+      { type: 'walk', direction: 'left' },
+      { type: 'stand', direction: 'down', time: 800 },
+    ],
+    talking: [
+      {
+        events: [
+          {
+            type: 'textMessage',
+            text: 'bro, I got this scam come come',
+            faceHero: 'npcC',
+          },
+          { type: 'textMessage', text: 'TROLOLOLO ya nooobbb GGEZ' },
+        ],
+      },
+    ],
+  },
+  hologram: {
+    type: 'MapElement',
+    x: utils.withGrid(20),
+    y: utils.withGrid(9),
+    src: '../../hallHologram.png',
+    frameWidth: 130,
+    frameHeight: 200,
+    animations: {
+      revealHologram: {
+        frames: [
+          [3, 0],
+          [3, 0],
+          [3, 0],
+          [3, 0],
+          [0, 0],
+          [0, 0],
+          [3, 0],
+          [3, 0],
+          [3, 0],
+          [3, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+        ],
+      },
+      hologramLoop: {
+        frames: [
+          [1, 0],
+          [1, 0],
+          [1, 0],
+          [2, 0],
+          [2, 0],
+          [2, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [1, 0],
+          [1, 0],
+          [1, 0],
+          [2, 0],
+          [2, 0],
+          [2, 0],
+        ],
+      },
+    },
+    animationSchedule: {
+      primary: 'hologramLoop',
+      alternate: 'revealHologram',
+      interval: 7000,
+    },
+  },
+  hologramBase: {
+    type: 'MapElement',
+    x: utils.withGrid(20),
+    y: utils.withGrid(9),
+    src: '../../hallHologramBase.png',
+    frameWidth: 130,
+    frameHeight: 200,
+    zIndexOffset: -128,
+  },
+};
+
+export function createGameObjects(
+  config: Record<string, GameObjectConfig>
+): Record<string, GameObject> {
+  const objects: Record<string, GameObject> = {};
+  for (const key in config) {
+    const objConfig = config[key];
+    switch (objConfig.type) {
+      case 'Person':
+        objects[key] = new Person(objConfig as any);
+        break;
+      case 'MapElement':
+        objects[key] = new MapElements(objConfig as any);
+        break;
+      default:
+        console.warn(`Unknown game object type: ${objConfig.type}`);
+    }
+  }
+  return objects;
+}
 
 const hallWalls = extractWallsFromAsepriteJson(collisionJson);
 export const worldMaps: any = {
   Hall: {
     lowerSrc: '../../Hall2.png',
     gameObjects: {
-      hero: new Person({
-        useShadow: true,
-        isPlayerControlled: true,
-        x: utils.withGrid(10),
-        y: utils.withGrid(6),
-        src: '',
-      }),
-      npcA: new Person({
-        useShadow: true,
-        isPlayerControlled: false,
-        x: utils.withGrid(24),
-        y: utils.withGrid(9),
-        src: '../../characters/chich.png',
-        behaviorLoop: [
-          { type: 'stand', direction: 'left', time: 800 },
-          { type: 'stand', direction: 'up', time: 800 },
-          { type: 'stand', direction: 'right', time: 1200 },
-          { type: 'stand', direction: 'up', time: 300 },
-        ],
-        talking: [
-          {
-            events: [
-              {
-                type: 'textMessage',
-                text: "Welcome to Asi's World!",
-                faceHero: 'npcA',
-              },
-              { type: 'textMessage', text: 'NOW LEAVE U FOOL!!!!1' },
-            ],
-          },
-        ],
-      }),
-      npcB: new Person({
-        useShadow: true,
-        isPlayerControlled: false,
-        x: utils.withGrid(3),
-        y: utils.withGrid(3),
-        src: '../../characters/iluz.png',
-        behaviorLoop: [
-          { type: 'stand', direction: 'right', time: 800 },
-          { type: 'stand', direction: 'down', time: 800 },
-          { type: 'stand', direction: 'left', time: 800 },
-          { type: 'stand', direction: 'up', time: 800 },
-        ],
-        talking: [
-          {
-            events: [
-              {
-                type: 'textMessage',
-                text: 'bro, I got this scam come come',
-                faceHero: 'npcC',
-              },
-              { type: 'textMessage', text: 'TROLOLOLO ya nooobbb GGEZ' },
-            ],
-          },
-        ],
-      }),
-      npcC: new Person({
-        useShadow: true,
-        isPlayerControlled: false,
-        x: utils.withGrid(5),
-        y: utils.withGrid(14),
-        src: '../../characters/iluz.png',
-        behaviorLoop: [
-          { type: 'walk', direction: 'right' },
-          { type: 'walk', direction: 'right' },
-          { type: 'walk', direction: 'right' },
-          { type: 'walk', direction: 'right' },
-          { type: 'walk', direction: 'right' },
-          { type: 'stand', direction: 'down', time: 800 },
-          { type: 'walk', direction: 'left' },
-          { type: 'walk', direction: 'left' },
-          { type: 'walk', direction: 'left' },
-          { type: 'walk', direction: 'left' },
-          { type: 'walk', direction: 'left' },
-          { type: 'stand', direction: 'down', time: 800 },
-        ],
-        talking: [
-          {
-            events: [
-              {
-                type: 'textMessage',
-                text: 'bro, I got this scam come come',
-                faceHero: 'npcC',
-              },
-              { type: 'textMessage', text: 'TROLOLOLO ya nooobbb GGEZ' },
-            ],
-          },
-        ],
-      }),
-      hologram: new MapElements({
-        x: utils.withGrid(12),
-        y: utils.withGrid(7),
-        src: '../../hallHologram.png',
-        frameWidth: 130,
-        frameHeight: 200,
-        animations: {
-          revealHologram: {
-            frames: [
-              [3, 0],
-              [3, 0],
-              [3, 0],
-              [3, 0],
-              [0, 0],
-              [0, 0],
-              [3, 0],
-              [3, 0],
-              [3, 0],
-              [3, 0],
-              [0, 0],
-              [0, 0],
-              [0, 0],
-            ],
-          },
-          hologramLoop: {
-            frames: [
-              [1, 0],
-              [1, 0],
-              [1, 0],
-              [2, 0],
-              [2, 0],
-              [2, 0],
-              [0, 0],
-              [0, 0],
-              [0, 0],
-              [1, 0],
-              [1, 0],
-              [1, 0],
-              [2, 0],
-              [2, 0],
-              [2, 0],
-            ],
-          },
-        },
-        animationSchedule: {
-          primary: 'hologramLoop',
-          alternate: 'revealHologram',
-          interval: 7000,
-        },
-      }),
-      hologramBase: new MapElements({
-        x: utils.withGrid(12),
-        y: utils.withGrid(7),
-        src: '../../hallHologramBase.png',
-        frameWidth: 130,
-        frameHeight: 200,
-        zIndexOffset: -128,
-      }),
+      ...createGameObjects(hallBaseObjects),
     },
     walls: hallWalls,
     cutsceneSpaces: {

@@ -1,5 +1,5 @@
+import { ScreenController } from '../utils/screenContorller';
 import utils from '../utils/utils';
-import CharacterSelection from './characterSelection';
 import TitleScreenSprite from './TitleScreenSprite';
 
 type TitleOption = {
@@ -33,8 +33,7 @@ export default class TitleScreen {
         action: async () => {
           console.log('Start Game selected!');
           this.gameStarted = true;
-          const charSelect = new CharacterSelection(gameContainer);
-          charSelect.init();
+          ScreenController.showCharacterSelection();
           this.destroy();
         },
       },
@@ -158,10 +157,5 @@ export default class TitleScreen {
 
     // Remove key listener
     window.removeEventListener('keydown', this.boundHandleInput);
-
-    // Null out references (optional cleanup)
-    // this.arrowSprite = null;
-    // this.titleSprite = null;
-    // this.titleTexts = null;
   }
 }

@@ -30,11 +30,20 @@ window.addEventListener('resize', scaleGameContainer);
 
 const gameContainer = document.querySelector('.game-container') as HTMLElement;
 
+let activeTitleScreen: TitleScreen | null = null;
+
 setTimeout(() => {
   gameContainer.style.display = 'block';
 
-  const titleScreen = new TitleScreen(gameContainer);
-  titleScreen.init();
+  activeTitleScreen = new TitleScreen(gameContainer);
+  activeTitleScreen.init();
 
   gameContainer.classList.add('fade-in');
 }, 1000);
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !activeTitleScreen) {
+    activeTitleScreen = new TitleScreen(gameContainer);
+    activeTitleScreen.init();
+  }
+});

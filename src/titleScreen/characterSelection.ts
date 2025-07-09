@@ -1,7 +1,7 @@
 import TitleScreenSprite from './TitleScreenSprite';
 import utils from '../utils/utils';
-import World from '../world/defineWorld';
-import { worldMaps } from '../world/maps';
+import { heroInitialState } from '../world/maps';
+import { ScreenController } from '../utils/screenContorller';
 
 export default class CharacterSelection {
   gameContainer: HTMLElement;
@@ -81,15 +81,9 @@ export default class CharacterSelection {
           : (bg.animations.charBG.frames = [[0, 0]]);
       });
     } else if (e.key === 'Enter') {
-      worldMaps.Hall.gameObjects.hero.sprite.image.src = String(
-        `${this.charSprites[this.selectedChar]}`
-      );
+      heroInitialState.src = String(`${this.charSprites[this.selectedChar]}`);
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      const world = new World({
-        element: this.gameContainer,
-      });
-      world.init();
-      this.destroy();
+      ScreenController.showWorld();
       return;
     }
     this.drawTitleScreen();
@@ -99,7 +93,7 @@ export default class CharacterSelection {
     this.charachterBG.forEach((bg, index) => {
       bg.draw(this.ctx, bg.x, bg.y);
       const charImage = this.preloadedImages[index];
-      console.log(charImage.complete);
+
       if (charImage.complete) {
         this.ctx.drawImage(charImage, bg.x, bg.y);
       }
