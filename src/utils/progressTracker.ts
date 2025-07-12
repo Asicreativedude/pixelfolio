@@ -15,7 +15,7 @@ export interface PlayerData {
   lastPosition: { x: number; y: number } | null;
 }
 
-const STORAGE_KEY = 'pixelFolioProgress';
+const STORAGE_KEY = 'pixelDudeProgress';
 
 export function loadPlayerData(): PlayerData | null {
   try {
