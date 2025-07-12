@@ -1,6 +1,7 @@
 import utils from '../utils/utils';
 import type { PersonConfig } from '../types';
 import GameObject from './gameObject';
+import { getPlayerData, savePlayerData } from '../utils/progressTracker';
 
 export default class Person extends GameObject {
   // Inherits from gameObject and adds:
@@ -93,6 +94,7 @@ export default class Person extends GameObject {
 
     if (behavior.type === 'stand') {
       this.isStanding = true;
+
       this.standBehaviorTimeout = setTimeout(() => {
         utils.emitEvent('PersonStandComplete', {
           whoId: this.id,
@@ -110,6 +112,12 @@ export default class Person extends GameObject {
     this.movingProgressRemaining -= 1;
 
     if (this.movingProgressRemaining === 0) {
+      if (this.isPlayerControlled) {
+        savePlayerData({
+          ...getPlayerData(),
+          lastPosition: { x: this.x, y: this.y },
+        });
+      }
       //We finished the walk!
       utils.emitEvent('PersonWalkingComplete', {
         whoId: this.id,

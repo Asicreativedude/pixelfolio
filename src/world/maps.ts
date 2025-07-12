@@ -4,6 +4,7 @@ import collisionJson from './mapsData/hallData.json';
 import MapElements from '../objects/mapElements';
 import type GameObject from '../objects/gameObject';
 import Person from '../objects/person';
+import { getPlayerData } from '../utils/progressTracker';
 
 type GameObjectConfig = {
   type: 'Person' | 'Collectable' | 'MapElement'; // Add other types as needed
@@ -13,12 +14,14 @@ type GameObjectConfig = {
   // Add any other shared config properties needed
   [key: string]: any;
 };
+const playerData = getPlayerData();
+console.log('Player data in maps.ts:', playerData);
 export const heroInitialState: GameObjectConfig = {
   type: 'Person',
   useShadow: true,
   isPlayerControlled: true,
-  x: utils.withGrid(10),
-  y: utils.withGrid(6),
+  x: playerData.lastPosition?.x ?? utils.withGrid(10),
+  y: playerData.lastPosition?.y ?? utils.withGrid(6),
   src: '',
 };
 export const hallBaseObjects: Record<string, GameObjectConfig> = {

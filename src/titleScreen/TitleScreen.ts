@@ -1,5 +1,7 @@
+import { getPlayerData } from '../utils/progressTracker';
 import { ScreenController } from '../utils/screenContorller';
 import utils from '../utils/utils';
+import { heroInitialState } from '../world/maps';
 import TitleScreenSprite from './TitleScreenSprite';
 
 type TitleOption = {
@@ -31,9 +33,18 @@ export default class TitleScreen {
         x: 204,
         y: 187,
         action: async () => {
-          console.log('Start Game selected!');
           this.gameStarted = true;
-          ScreenController.showCharacterSelection();
+          const player = getPlayerData();
+          console.log('Player data:', player);
+          if (!player.isFirst) {
+            heroInitialState.src = player.selectedCharacter;
+            heroInitialState.x = player.lastPosition!.x;
+            heroInitialState.y = player.lastPosition!.y;
+            console.log('Loading existing player data:', heroInitialState);
+            ScreenController.showWorld();
+          } else {
+            ScreenController.showCharacterSelection();
+          }
           this.destroy();
         },
       },

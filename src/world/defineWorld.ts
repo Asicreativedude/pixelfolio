@@ -5,6 +5,7 @@ import type GameObject from '../objects/gameObject';
 import { hallBaseObjects, createGameObjects, worldMaps } from './maps';
 import KeyPressListener from '../utils/keyPressListener';
 import { ScreenController } from '../utils/screenContorller';
+import { getPlayerData } from '../utils/progressTracker';
 
 export default class World {
   element: HTMLElement;
@@ -122,7 +123,10 @@ export default class World {
     heroInitialState: HeroInitialState | null = null
   ) {
     const freshObjects = createGameObjects(hallBaseObjects);
+    const playerData = getPlayerData();
+    console.log(playerData.lastPosition);
     this.map = new WorldMap({ ...mapConfig, gameObjects: freshObjects });
+    playerData.lastMap = this.map;
     this.map.world = this;
     this.map.mountObjects();
     if (heroInitialState) {

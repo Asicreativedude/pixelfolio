@@ -2,6 +2,7 @@ import TitleScreenSprite from './TitleScreenSprite';
 import utils from '../utils/utils';
 import { heroInitialState } from '../world/maps';
 import { ScreenController } from '../utils/screenContorller';
+import { getPlayerData, setPlayerData } from '../utils/progressTracker';
 
 export default class CharacterSelection {
   gameContainer: HTMLElement;
@@ -82,6 +83,10 @@ export default class CharacterSelection {
       });
     } else if (e.key === 'Enter') {
       heroInitialState.src = String(`${this.charSprites[this.selectedChar]}`);
+      const player = getPlayerData();
+      player.selectedCharacter = this.charSprites[this.selectedChar];
+      player.isFirst = false;
+      setPlayerData(player);
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ScreenController.showWorld();
       return;
