@@ -5,7 +5,7 @@ import './styles/sceneTransition.css';
 import './styles/textMessage.css';
 
 import Stats from 'stats.js';
-import TitleScreen from './titleScreen/TitleScreen';
+import TitleScreen from './titleScreen/titleScreen';
 
 const stats = new Stats();
 stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom

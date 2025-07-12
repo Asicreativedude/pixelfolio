@@ -124,7 +124,6 @@ export default class World {
   ) {
     const freshObjects = createGameObjects(hallBaseObjects);
     const playerData = getPlayerData();
-    console.log(playerData.lastPosition);
     this.map = new WorldMap({ ...mapConfig, gameObjects: freshObjects });
     playerData.lastMap = this.map;
     this.map.world = this;

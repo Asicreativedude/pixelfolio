@@ -1,4 +1,4 @@
-import TitleScreenSprite from './TitleScreenSprite';
+import TitleScreenSprite from './titleScreenSprite';
 import utils from '../utils/utils';
 import { heroInitialState } from '../world/maps';
 import { ScreenController } from '../utils/screenContorller';
@@ -98,7 +98,6 @@ export default class CharacterSelection {
     this.charachterBG.forEach((bg, index) => {
       bg.draw(this.ctx, bg.x, bg.y);
       const charImage = this.preloadedImages[index];
-
       if (charImage.complete) {
         this.ctx.drawImage(charImage, bg.x, bg.y);
       }

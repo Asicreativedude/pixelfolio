@@ -28,8 +28,8 @@ export default class TextMessage {
     this.element.classList.add('TextMessage');
 
     const canvas = document.createElement('canvas');
-    canvas.width = 400;
-    canvas.height = 32;
+    canvas.width = 500;
+    canvas.height = 48;
     canvas.classList.add('TextMessage_canvas');
     this.element.appendChild(canvas);
 

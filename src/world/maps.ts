@@ -15,7 +15,6 @@ type GameObjectConfig = {
   [key: string]: any;
 };
 const playerData = getPlayerData();
-console.log('Player data in maps.ts:', playerData);
 export const heroInitialState: GameObjectConfig = {
   type: 'Person',
   useShadow: true,

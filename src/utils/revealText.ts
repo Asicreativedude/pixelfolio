@@ -1,62 +1,9 @@
-// // Rveals text one character at a time, with a delay between each character.
-
-// export default class RevealingText {
-//   element: HTMLElement;
-//   text: string;
-//   speed: number;
-//   timeout: number | undefined;
-//   isDone: boolean;
-
-//   constructor(config: { element: HTMLElement; text: string; speed: number }) {
-//     this.element = config.element;
-//     this.text = config.text;
-//     this.speed = config.speed || 80;
-
-//     this.timeout = undefined;
-//     this.isDone = false;
-//   }
-//   revealOneCharacter(list: any[]) {
-//     const next = list.splice(0, 1)[0];
-//     next.span.classList.add('revealed');
-
-//     if (list.length > 0) {
-//       this.timeout = setTimeout(() => {
-//         this.revealOneCharacter(list);
-//       }, next.delayAfter);
-//     } else {
-//       this.isDone = true;
-//     }
-//   }
-
-//   warpToDone() {
-//     clearTimeout(this.timeout);
-//     this.isDone = true;
-//     this.element.querySelectorAll('span').forEach((s) => {
-//       s.classList.add('revealed');
-//     });
-//   }
-//   init() {
-//     let characters: { span: HTMLSpanElement; delayAfter: number }[] = [];
-//     this.text.split('').forEach((character) => {
-//       //Create each span, add to element in DOM
-//       let span = document.createElement('span');
-//       span.textContent = character;
-//       this.element.appendChild(span);
-
-//       //Add this span to our internal state Array
-//       characters.push({
-//         span,
-//         delayAfter: character === ' ' ? 0 : this.speed,
-//       });
-//     });
-
-//     this.revealOneCharacter(characters);
-//   }
-// }
 const CHAR_WIDTH = 16;
 const CHAR_HEIGHT = 16;
-const CHAR_SPACING = 12;
-const CHAR_MAP = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!?@$.,';
+const CHAR_SPACING = 11;
+const LINE_HEIGHT = 32;
+const CHAR_MAP = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!?@$.,'";
+const LINEMARGIN = 8;
 
 export default class RevealingText {
   canvas: HTMLCanvasElement;
@@ -66,12 +13,18 @@ export default class RevealingText {
   timeout: number | undefined;
   isDone: boolean;
   fontImage: HTMLImageElement;
+  currentX: number = LINEMARGIN * 2;
+  currentY: number = 0;
+  maxWidth: number;
+  lineHeight: number = LINE_HEIGHT;
+  distanceFromTop: number;
 
   constructor(config: {
     canvas: HTMLCanvasElement;
     text: string;
     speed?: number;
     fontImage: HTMLImageElement;
+    distanceFromTop?: number;
   }) {
     this.canvas = config.canvas;
     this.ctx = this.canvas.getContext('2d')!;
@@ -79,10 +32,43 @@ export default class RevealingText {
     this.speed = config.speed || 80;
     this.fontImage = config.fontImage;
     this.isDone = false;
+    this.maxWidth = this.canvas.width - LINEMARGIN * 2;
+    this.currentX = LINEMARGIN * 2;
+    this.distanceFromTop = config.distanceFromTop || LINEMARGIN;
   }
 
-  revealOneCharacter(chars: string[], index: number = 0) {
-    const char = chars[index];
+  revealOneCharacter(
+    words: string[],
+    wordIndex: number = 0,
+    charIndex: number = 0
+  ) {
+    if (wordIndex >= words.length) {
+      this.isDone = true;
+      return;
+    }
+
+    const word = words[wordIndex];
+    const wordPixelLength = word.length * CHAR_SPACING;
+
+    // If the word can't fit on the current line, move to next line first
+    if (
+      charIndex === 0 &&
+      this.currentX + wordPixelLength > this.canvas.width - LINEMARGIN
+    ) {
+      this.currentX = LINEMARGIN;
+      this.currentY += this.lineHeight;
+
+      // Prevent leading space on new line
+      if (word[0] === ' ') {
+        this.timeout = setTimeout(
+          () => this.revealOneCharacter(words, wordIndex + 1, 0),
+          this.speed
+        );
+        return;
+      }
+    }
+
+    const char = word[charIndex];
     const { x, y } = this.getCharCoords(char);
 
     this.ctx.drawImage(
@@ -91,19 +77,26 @@ export default class RevealingText {
       y,
       CHAR_WIDTH,
       CHAR_HEIGHT,
-      index * CHAR_SPACING,
-      0,
+      this.currentX,
+      this.currentY,
       CHAR_WIDTH,
       CHAR_HEIGHT
     );
 
-    if (index < chars.length - 1) {
+    this.currentX += CHAR_SPACING;
+
+    if (charIndex < word.length - 1) {
       this.timeout = setTimeout(
-        () => this.revealOneCharacter(chars, index + 1),
+        () => this.revealOneCharacter(words, wordIndex, charIndex + 1),
         char === ' ' ? 0 : this.speed
       );
     } else {
-      this.isDone = true;
+      // Add space after word
+      this.currentX += 8;
+      this.timeout = setTimeout(
+        () => this.revealOneCharacter(words, wordIndex + 1, 0),
+        this.speed
+      );
     }
   }
 
@@ -119,25 +112,41 @@ export default class RevealingText {
     clearTimeout(this.timeout);
     this.isDone = true;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.text.split('').forEach((char, i) => {
-      const { x, y } = this.getCharCoords(char);
-      this.ctx.drawImage(
-        this.fontImage,
-        x,
-        y,
-        CHAR_WIDTH,
-        CHAR_HEIGHT,
-        i * CHAR_SPACING,
-        0,
-        CHAR_WIDTH,
-        CHAR_HEIGHT
-      );
-    });
+    this.currentX = LINEMARGIN * 2;
+    this.currentY = 0;
+    const words = this.text.split(' ');
+    for (const word of words) {
+      const wordPixelLength = word.length * CHAR_SPACING;
+      if (this.currentX + wordPixelLength > this.canvas.width - LINEMARGIN) {
+        this.currentX = 32;
+        this.currentY += this.lineHeight;
+      }
+      for (const char of word) {
+        const { x, y } = this.getCharCoords(char);
+        this.ctx.filter = 'brightness(0.5)'; // Optional: invert colors for effect
+        this.ctx.drawImage(
+          this.fontImage,
+          x,
+          y,
+          CHAR_WIDTH,
+          CHAR_HEIGHT,
+          this.currentX,
+          this.currentY,
+          CHAR_WIDTH,
+          CHAR_HEIGHT
+        );
+        this.ctx.filter = 'none'; // Reset filter
+        this.currentX += CHAR_SPACING;
+      }
+      this.currentX += CHAR_SPACING; // Add space after word
+    }
   }
 
   init() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    const chars = this.text.split('');
-    this.revealOneCharacter(chars);
+    this.currentX = LINEMARGIN;
+    this.currentY = this.distanceFromTop;
+    const words = this.text.split(' ');
+    this.revealOneCharacter(words);
   }
 }

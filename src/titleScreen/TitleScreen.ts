@@ -2,7 +2,7 @@ import { getPlayerData } from '../utils/progressTracker';
 import { ScreenController } from '../utils/screenContorller';
 import utils from '../utils/utils';
 import { heroInitialState } from '../world/maps';
-import TitleScreenSprite from './TitleScreenSprite';
+import TitleScreenSprite from './titleScreenSprite';
 
 type TitleOption = {
   label: string;
@@ -32,15 +32,13 @@ export default class TitleScreen {
         label: 'Start Game',
         x: 204,
         y: 187,
-        action: async () => {
+        action: () => {
           this.gameStarted = true;
           const player = getPlayerData();
-          console.log('Player data:', player);
           if (!player.isFirst) {
             heroInitialState.src = player.selectedCharacter;
             heroInitialState.x = player.lastPosition!.x;
             heroInitialState.y = player.lastPosition!.y;
-            console.log('Loading existing player data:', heroInitialState);
             ScreenController.showWorld();
           } else {
             ScreenController.showCharacterSelection();
@@ -58,7 +56,10 @@ export default class TitleScreen {
         label: 'About',
         x: 244,
         y: 257,
-        action: () => window.open('https:/asicreativedude.com', '_blank'),
+        action: () => {
+          ScreenController.showAbout();
+          this.destroy();
+        },
       },
     ];
     this.arrowSprite = new TitleScreenSprite({
@@ -121,13 +122,13 @@ export default class TitleScreen {
     let previousMs: number;
     const step = 1 / 60;
     const stepFn = (timestampMs: number) => {
+      if (this.gameStarted) return; // Stop if game has started
       if (previousMs === undefined) {
         previousMs = timestampMs;
       }
       let delta = (timestampMs - previousMs) / 1000;
       while (delta > step) {
-        !this.gameStarted && this.drawTitleScreen();
-        // : this.charSelect.drawTitleScreen();
+        this.drawTitleScreen();
         delta -= step;
       }
       previousMs = timestampMs - delta * 1000;
