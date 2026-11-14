@@ -75,5 +75,15 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   with a new head drawn in the script: long straight blonde hair instead of curls, blue eyes. 11 colours, all
   ENDESGA 32. About 20 minutes, most of it reading Saruli's frames, because her frames sit at different offsets
   from the hero's. In game: Saruli at column 22, Dana at column 25.
-- Limits: it reuses an existing body, so a character gets the hero's or Saruli's build and walk. A new body
+- Third test, nothing reused ("a dog, a desk, a part of a map"):
+  - `make_dog.py` → `dog.png` / `dog.aseprite`: a dog in the cast's sheet layout (4 directions, idle + 2 walk
+    frames), drawn pixel by pixel in the script at character density with a dark outline. 8 colours. In game:
+    column 28. `dog-preview.png` is the sheet at 7×.
+  - `make_room.py` → `desk.png`, `room.png` (+ `@2x`, + `.aseprite`): a desk and an 11 × 7.5 tile office room
+    (window, pin board, bookshelf, plant, chair, rug, doormat). Drawn on the 16 px grid and exported at 2×
+    with no outlines, as #60 says for maps. `scene.png` is the room at 2× with the test cast at 1:1, zoomed 3×.
+  - About 35 minutes for all three. Everything is 100% ENDESGA 32.
+  - Open points it shows: ENDESGA 32 has one mid slate blue, so the Hall's soft two-tone checker floor can't be
+    kept; the room marks tile corners instead. The room isn't wired into the game (no walls, no map entry).
+- Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
