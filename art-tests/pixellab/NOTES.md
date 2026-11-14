@@ -151,5 +151,26 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   - Another scene: the same code lights a crop of the existing Hall (lamp over the lounge, daylight from the door).
   - Open: lit colours are not palette-locked (51 colours by day, 358 at dusk). Warm light on the Hall's blue
     floor turns grey. Furniture casts no shadow from the new lights, only figures do. About 30 minutes.
+- Asi on the second version: "lets work on those - if we need to re-adjust the color palette we can consider
+  this", about its three open points. Third version of `make_painted_light.py`:
+  - Grey floor: light no longer only multiplies. Where multiplying drains a surface's colour, the surface keeps
+    its colour, gains a little, and its hue turns part of the way towards the light's hue. The Hall's blue floor
+    goes violet under the warm lamp instead of grey.
+  - Furniture shadows: every prop has a footprint and a height (taken from the cast offset `make_room.py`
+    already gives it), and a pixel is in shadow when the way to the light crosses a tall enough footprint. The
+    shadows baked into the room art are switched off for this, so light is the only source of shadow. The Hall
+    is one flat picture, so there everything that is not floor counts as 8 px tall.
+  - Palette: every lit pixel is snapped to a fixed palette. Tried on the dusk office (mean distance in OKLab
+    from the colour asked for; lower is better): ENDESGA 32 alone 0.047, ENDESGA 64 0.035, Resurrect 64 0.049,
+    AAP-64 0.050, and ENDESGA 32 plus 32 colours fitted to these scenes 0.027 (Hall: 0.039, 0.041, 0.040,
+    0.052, 0.015). ENDESGA 32 alone loses the light (the floor stays one tone, the rug blotches). The
+    ready-made 64s lose faces and turn the floor pool grey. The fitted one is close to free colour, so the
+    sheet uses it: `palettes/endesga-32-plus-light.hex`, 64 colours, all five pictures use only these.
+    `painted-light-palettes.png` shows ENDESGA 32, ENDESGA 64, the fitted palette and free colour side by side.
+  - So the palette change this light needs: drawing stays in ENDESGA 32 (#60 holds), and the game gets 32
+    more colours that only light may use. They are fitted to one warm lamp, one teal screen, one dusk and one
+    night; other light colours would need the fit run again.
+  - Open: still a picture made by a script, not light in the game. The Hall's art is not ENDESGA 32, so its
+    unlit colours are snapped too. Heights are guesses. About 50 minutes.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
