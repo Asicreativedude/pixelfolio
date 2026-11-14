@@ -186,6 +186,7 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
       ['testSaruli', 22, '../../characters/saruli.png'],
       ['testClaudeF', 25, '/art-tests/claude-drawn/dana.png'],
       ['testDog', 28, '/art-tests/claude-drawn/dog.png'],
+      ['testHeroDetailed', 31, '/art-tests/claude-drawn/hero-detailed.png'],
     ].map(([id, col, src]) => [
       id,
       {

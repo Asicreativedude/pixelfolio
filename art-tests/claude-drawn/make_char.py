@@ -3,6 +3,10 @@
 # here, pixel by pixel, for front, side and back, and stamped at each frame's head offset. Left = right mirrored.
 #   visitor: the hero's body, short sleeves made long.
 #   dana: Saruli's body (dress), long straight hair instead of curls.
+#   hero-detailed: Asi's own hero, nothing redrawn, recoloured to ENDESGA 32 (his sheet is read only).
+# Every frame then gets detail(): a wider shadow on the far side, a hem, a shadow under the chin, a third hair
+# tone, a belt with a buckle, cuffs, a shine on the shoes. (Asi on the flat versions: "they need a bit more
+# details / shading / touch ups. It applies to characters as well (also ones I did already)".)
 #
 # usage (repo root): python3 -I art-tests/claude-drawn/make_char.py
 # Rows are run-length: "6. # 4H 2L" = 6 clear, 1 outline, 4 hair, 2 hair light. "_" keeps the template pixel.
@@ -13,11 +17,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 E32 = set(open(os.path.join(HERE, '../pixellab/e32.hex')).read().split())
 # letter -> colour. T/t = top or dress, d = trousers, c = shoes, B = iris, M = mouth.
 PAL = {'#': '181425', 'H': 'f77622', 'h': 'be4a2f', 'L': 'feae34', 's': 'e8b796', 'k': 'c28569',
-       'e': '3e2731', 'W': 'ffffff', 'M': 'b86f50', 'T': '3e8948', 't': '265c42', 'd': '3a4466'}
+       'e': '3e2731', 'W': 'ffffff', 'M': 'b86f50', 'T': '3e8948', 't': '265c42', 'd': '3a4466',
+       # detail pass: U/u = top highlight / deep shade, D/f = trousers highlight / shade, j = hair deep shade,
+       # b/g = belt and buckle, o = shine on black shoes, C = shine on coloured shoes
+       'U': '63c74d', 'u': '193c3e', 'D': '5a6988', 'f': '262b44', 'j': 'a22633', 'b': '733e39', 'g': 'feae34',
+       'o': '3a4466', 'C': '5a6988'}
 # template colour -> letter. Colours not listed (old hair, earrings) are dropped.
 HERO_ROLE = {'000000': '#', '150908': '#', '513407': '#', '191919': 'd', '121212': 'd', 'ebbf96': 's',
              'cba582': 'k', '0989a0': 'T', '076a7c': 't', '6c6c6c': 't', '4c4c4c': 't', '373737': 't',
              'ffffff': 't'}
+# the hero whole, head included: G/q/Q = grey hair, n = glasses tint
+HERO_FULL = {**HERO_ROLE, '6c6c6c': 'G', '4c4c4c': 'q', '373737': 'Q', 'ffffff': 'W', '150908': 'e', '513407': 'n'}
 SARULI_ROLE = {'000000': '#', 'e3ab7e': 's', 'edb384': 's', 'b18562': 'k', '3a4d8a': 'T', '27325b': 't',
                'a83e3e': 'c'}
 
@@ -73,12 +83,68 @@ CHARS = {
                     mirror=[31, 28, 24]),
     'dana': dict(sheet='public/characters/saruli.png', role=SARULI_ROLE, long_sleeves=False,
                  pal={'H': 'feae34', 'h': 'd77643', 'L': 'fee761', 'T': 'e43b44', 't': 'a22633',
-                      'c': '3a4466', 'B': '124e89', 'M': 'a22633'},
+                      'c': '3a4466', 'B': '124e89', 'M': 'a22633', 'U': 'f6757a', 'u': '3e2731', 'j': 'be4a2f'},
                  views={0: (D_FRONT, 34, [(0, 0), (-1, 1), (-3, 0)]),
                         2: (D_SIDE, 37, [(0, 0), (-1, 0), (-4, 0)]),
                         3: (D_BACK, 34, [(0, 0), (-1, 1), (-3, 0)])},
                     mirror=[30, 25, 23]),
+    # Asi's own hero, nothing redrawn: recoloured to ENDESGA 32, then the same detail pass as the others
+    'hero-detailed': dict(sheet='public/Hero/Sprite-Hero.png', role=HERO_FULL, long_sleeves=False,
+                          pal={'T': '0099db', 't': '124e89', 'U': '2ce8f5', 'u': '262b44', 'd': '262b44',
+                               'D': '3a4466', 'f': '181425', 'G': '8b9bb4', 'q': '5a6988', 'Q': '262b44',
+                               'n': '733e39'},
+                          views={r: ({}, -1, [(0, 0)] * 3) for r in range(4)}, mirror=None),
 }
+TOP, HAIR, SKIN = 'TtUu', 'HhLj', 'sk'
+
+
+def detail(g, front):
+    """More shading and small details, by rule, so every walk frame gets the same treatment. Light: upper left.
+    Only the silhouette is shaded; fold lines inside a shape are left as drawn."""
+    def sil(x, y, dx, dy, n=1):  # is the silhouette within n pixels in this direction?
+        for i in range(1, n + 1):
+            v = g.get((x + dx * i, y + dy * i))
+            if v is None or (v == '#' and g.get((x + dx * (i + 1), y + dy * (i + 1))) is None):
+                return True
+            if v == '#':
+                return False
+        return False
+
+    def shoe(x, y):  # inside a black shoe
+        return y >= 56 and all(g.get(q) == '#' for q in ((x, y), (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)))
+    new = {}
+    for (x, y), v in g.items():
+        up, up2 = g.get((x, y - 1)), g.get((x, y - 2))
+        if v == 'T':
+            if sil(x, y, 1, 0, 2) or sil(x, y, 0, 1) or (up == '#' and up2 and up2 in SKIN + HAIR):
+                new[x, y] = 't'                                         # far side, hem, shadow under the chin
+            elif sil(x, y, 0, -1):
+                new[x, y] = 'U'                                         # top of the shoulders
+        elif v == 't' and (sil(x, y, 1, 0) or sil(x, y, 0, 1)):
+            new[x, y] = 'u'
+        elif v == 'd':
+            if (up and up in TOP) or (up == '#' and up2 and up2 in TOP):
+                new[x, y] = 'b'                                         # belt
+            elif sil(x, y, 1, 0):
+                new[x, y] = 'f'
+            elif sil(x, y, -1, 0):
+                new[x, y] = 'D'
+        elif v == 's' and (sil(x, y, 1, 0) or (up and up in HAIR)):     # far side, shadow under the hair
+            new[x, y] = 'k'
+        elif v == 'h' and (sil(x, y, 1, 0) or sil(x, y, 0, 1)):
+            new[x, y] = 'j'
+        elif v == 'c' and g.get((x, y - 1), '#') == '#' and g.get((x + 1, y)) == 'c':
+            new[x, y] = 'C'
+        elif shoe(x, y) and not shoe(x, y - 1) and shoe(x + 1, y):
+            new[x, y] = 'o'
+    g.update(new)
+    belt = [p for p, v in g.items() if v == 'b']
+    if front and belt:
+        mid = (min(x for x, _ in belt) + max(x for x, _ in belt)) // 2
+        for p in belt:
+            if p[0] in (mid, mid + 1):
+                g[p] = 'g'
+
 
 def rle(s):
     return ''.join(t[-1] * int(t[:-1] or 1) for t in s.split())
@@ -105,13 +171,14 @@ def frame(cfg, pal, tpl, r, c):
         hand = max(y for _, y in arm) - 3
         for p in arm:
             if p[1] < hand:
-                g[p] = 'T' if g[p] == 's' else 't'
+                g[p] = 'T' if g[p] == 's' and p[1] < hand - 1 else 't'   # last sleeve row is a cuff
     for y, row in stamp.items():
         for x, ch in enumerate(rle(row)):
             if ch == '.':
                 g.pop((x + dx, y + dy), None)
             elif ch != '_':
                 g[x + dx, y + dy] = ch
+    detail(g, r == 0)
     out = Image.new('RGBA', (64, 64))
     for p, v in g.items():
         if 0 <= p[0] < 64 and 0 <= p[1] < 64:
@@ -126,7 +193,7 @@ for name, cfg in CHARS.items():
         for c in range(3):
             f = frame(cfg, pal, tpl, r, c)
             sheet.paste(f, (c * 64, r * 64))
-            if r == 2:  # left row
+            if r == 2 and cfg['mirror']:  # left row
                 m = Image.new('RGBA', (64, 64))
                 m.paste(ImageOps.mirror(f), (cfg['mirror'][c] - 63, 0))
                 sheet.paste(m, (c * 64, 64))

@@ -88,7 +88,20 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
       shell are still 16 px at 2× (Asi: "floor we can figure it out").
     - This goes against #60's "maps drawn at 16 px, exported 2×" for props. It is evidence for the open question
       of drawing maps at the characters' density.
-  - About 35 minutes for all three, plus 15 for the v2 props. Everything is 100% ENDESGA 32.
+    - Asi on v2: "Yessss much better. I do think they need a bit more details / shading / touch ups. It applies
+      to characters as well (also ones I did already)."
+    - v3 (`scene.png`; v2 kept as `scene-v2.png`): same language, more of it. Light from the upper left, and
+      every object casts a shadow down-right onto what is under it (`Canvas.prop(cast=...)` darkens by one palette
+      step). Surfaces get a lit and a dark edge. New details: a code editor on the monitor, keys, paper and pen,
+      a lamp light pool, a city view in the window, a cactus, a clock, a bin, a trophy, book labels.
+      `desk-compare.png` is v2 left, v3 right.
+  - Characters, same feedback: `make_char.py` now runs a rule-based detail pass on every frame (wider far-side
+    shadow, hem, shadow under the chin, third hair tone, belt and buckle, cuffs, shoe shine). It also writes
+    `hero-detailed.png`: Asi's own hero recoloured to ENDESGA 32 with the same pass, his sheet untouched.
+    `cast-compare.png` shows before (top) and after (bottom). The change on characters is small: rules can
+    shade a silhouette, but faces and hair need hand work. The hero's teal shirt becomes blue and his grey hair
+    turns blue-grey, because ENDESGA 32 has no teal and no neutral grey. In game: the detailed hero is column 31.
+  - About 35 minutes for all three, plus 15 for the v2 props and 30 for v3. Everything is 100% ENDESGA 32.
   - Open points it shows: ENDESGA 32 has one mid slate blue, so the Hall's soft two-tone checker floor can't be
     kept; the room marks tile corners instead. The room isn't wired into the game (no walls, no map entry).
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
