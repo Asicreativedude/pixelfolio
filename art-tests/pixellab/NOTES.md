@@ -108,5 +108,11 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   style no?" First probe: `make_styles.py` → `styles.png`, the same room four ways (as drawn; dusk with the lamp
   and screen as the only light; slate world with warm accents; toned outlines instead of one dark ink). These
   change palette, light and outline only. Shapes, proportions and what is in the room are the same drawing.
+- Asi then named what he likes, none of it pixel art: Arcane, Scavengers Reign, Retool's old site art, PostHog,
+  Disco Elysium. `make_illustrated.py` → `illustrated.png` draws one office corner as illustration in the two
+  families those fall into: line and flat colour (top), painted light with brush marks (bottom), each smooth at
+  high resolution (left) and as pixel art at game scale (right). Custom palettes, not ENDESGA 32. The line family
+  holds up in both; the painted family only works smooth, its pixel version turns to noise. About 40 minutes.
+  Retool's old art could not be found online, so it is not represented.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
