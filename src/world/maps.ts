@@ -5,6 +5,7 @@ import MapElements from '../objects/mapElements';
 import type GameObject from '../objects/gameObject';
 import Person from '../objects/person';
 import { getPlayerData } from '../utils/progressTracker';
+import clutter from '../../art-tests/claude-drawn/game/clutter.json';
 
 type GameObjectConfig = {
   type: 'Person' | 'Collectable' | 'MapElement'; // Add other types as needed
@@ -232,7 +233,92 @@ export function createGameObjects(
 }
 
 const hallWalls = extractWallsFromAsepriteJson(collisionJson);
+
+// ponytail: #65 test room (branch prototype/pixellab-test, never merge): the lived-in clutter still as a map.
+// Open /?map=Clutter or /?map=ClutterEvening. Assets: art-tests/claude-drawn/directions/make_d06_game.py.
+const G = '/art-tests/claude-drawn/game/';
+// the tile (col, row) of the room image under a figure's feet
+const at = (col: number, row: number) => ({
+  x: utils.withGrid(col + 1),
+  y: utils.withGrid(row - 1),
+});
+const stand = (direction: string, time: number) => ({
+  type: 'stand',
+  direction,
+  time,
+});
+const clutterObjects: Record<string, GameObjectConfig> = {
+  hero: {
+    type: 'Person',
+    isPlayerControlled: true,
+    ...at(5, 6),
+    direction: 'up',
+    src: G + 'hero.png',
+  },
+  dana: {
+    type: 'Person',
+    ...at(8, 4),
+    direction: 'up',
+    src: G + 'dana.png',
+    behaviorLoop: [stand('up', 2600), stand('left', 900), stand('up', 1800), stand('down', 700)],
+    talking: [
+      {
+        events: [
+          {
+            type: 'textMessage',
+            text: 'Half of these books are still in the boxes.',
+            faceHero: 'dana',
+          },
+        ],
+      },
+    ],
+  },
+  visitor: {
+    type: 'Person',
+    ...at(2, 4),
+    direction: 'right',
+    src: G + 'visitor.png',
+    behaviorLoop: [stand('right', 2200), stand('up', 1400), stand('down', 900)],
+    talking: [
+      {
+        events: [
+          {
+            type: 'textMessage',
+            text: 'Nice light in here in the morning.',
+            faceHero: 'visitor',
+          },
+        ],
+      },
+    ],
+  },
+  dog: {
+    type: 'Person',
+    ...at(6, 4),
+    src: G + 'dog.png',
+    behaviorLoop: [
+      stand('down', 1800),
+      { type: 'walk', direction: 'right' },
+      stand('right', 1400),
+      stand('down', 900),
+      { type: 'walk', direction: 'left' },
+      stand('left', 1200),
+    ],
+    talking: [{ events: [{ type: 'textMessage', text: 'Woof.' }] }],
+  },
+};
+const clutterWalls = Object.fromEntries(clutter.walls.map((k) => [k, true]));
+const clutterMap = (time: 'day' | 'evening') => ({
+  lowerSrc: `${G}clutter-${time}.png`,
+  baseObjects: clutterObjects,
+  walls: clutterWalls,
+  light: clutter.light[time],
+  // the room is smaller than the screen: keep it centred instead of following the hero
+  camera: { x: 160, y: 100 },
+  background: '#131c2b',
+});
 export const worldMaps: any = {
+  Clutter: clutterMap('day'),
+  ClutterEvening: clutterMap('evening'),
   Hall: {
     lowerSrc: '../../Hall2.png',
     gameObjects: {

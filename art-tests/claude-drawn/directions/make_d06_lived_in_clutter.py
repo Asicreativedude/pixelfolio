@@ -562,26 +562,35 @@ def rgb(c):
     return tuple(bytes.fromhex(c))
 
 
-def cast(out, total):
-    """Each figure reads the light where it stands: how bright (one value for the whole figure, so it stays flat)
-    and from which side. A part is then two tones: its ramp step for that light, and one step down on the far side."""
+def figure(s, table, here, from_right, w=40):
+    """One 64 px frame of a sheet in the room's colours, as (x, y, colour). here: the light where the figure stands
+    (one value for the whole figure, so it stays flat). A part is two tones: its ramp step for that light, and one
+    step down on the side away from the light."""
+    for sy in range(64):
+        xs = [sx for sx in range(w) if s[sx, sy][3]]
+        for sx in xs:
+            part = table['%02x%02x%02x' % s[sx, sy][:3]]
+            part = part(sy) if callable(part) else part
+            if part is None or isinstance(part, str):
+                yield sx, sy, rgb(part or K); continue
+            far = (sx - xs[0]) < .3 * (xs[-1] - xs[0]) if from_right else (xs[-1] - sx) < .3 * (xs[-1] - xs[0])
+            step = max(2 if part[1] >= 2.5 else 1, min(6, int(part[1] + here + .5)))
+            yield sx, sy, rgb(RAMPS[part[0]][step - far])
+
+
+def standing(total, x, y):
+    """The light a figure reads where it stands (x, y: top left of its frame): how bright, and from which side."""
     def mean(x0, y0, x1, y1):
-        v = [total[yy * W + xx] for yy in range(y0, y1) for xx in range(max(x0, 0), min(x1, W))]
+        v = [total[yy * W + xx] for yy in range(max(y0, 0), min(y1, H)) for xx in range(max(x0, 0), min(x1, W))]
         return sum(v) / len(v)
+    return mean(x + 8, y + 50, x + 32, y + 64) + .35, mean(x + 26, y + 20, x + 46, y + 64) > mean(x - 6, y + 20, x + 14, y + 64) + .05
+
+
+def cast(out, total):
     for src, row, x, y, table in PEOPLE:
         s = Image.open(os.path.join(HERE, '..', src)).convert('RGBA').crop((0, row * 64, 40, row * 64 + 64)).load()
-        here = mean(x + 8, y + 50, x + 32, y + 64) + .35
-        from_right = mean(x + 26, y + 20, x + 46, y + 64) > mean(x - 6, y + 20, x + 14, y + 64) + .05
-        for sy in range(64):
-            xs = [sx for sx in range(40) if s[sx, sy][3]]
-            for sx in xs:
-                part = table['%02x%02x%02x' % s[sx, sy][:3]]
-                part = part(sy) if callable(part) else part
-                if part is None or isinstance(part, str):
-                    out[(y + sy) * W + x + sx] = rgb(part or K); continue
-                far = (sx - xs[0]) < .3 * (xs[-1] - xs[0]) if from_right else (xs[-1] - sx) < .3 * (xs[-1] - xs[0])
-                step = max(2 if part[1] >= 2.5 else 1, min(6, int(part[1] + here + .5)))
-                out[(y + sy) * W + x + sx] = rgb(RAMPS[part[0]][step - far])
+        for sx, sy, c in figure(s, table, *standing(total, x, y)):
+            out[(y + sy) * W + x + sx] = c
 
 
 # --- light and render ---------------------------------------------------------------------------------------------
@@ -632,6 +641,7 @@ def render():
         out.append(rgb(RAMPS[m % FLAT][max(0, min(6, int(v + .5)))] if m else K))
     cast(out, total)
     im = Image.new('RGB', (W, H)); im.putdata(out)
+    im.light = total                                            # make_d06_game.py reads it for the cast's sheets
     return im
 
 

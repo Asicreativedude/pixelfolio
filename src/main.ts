@@ -6,6 +6,7 @@ import './styles/textMessage.css';
 
 import Stats from 'stats.js';
 import TitleScreen from './titleScreen/titleScreen';
+import { ScreenController } from './utils/screenContorller';
 
 const stats = new Stats();
 stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -34,11 +35,16 @@ let activeTitleScreen: TitleScreen | null = null;
 
 setTimeout(() => {
   gameContainer.style.display = 'block';
+  gameContainer.classList.add('fade-in');
+
+  // ponytail: #65 test, /?map=Clutter goes straight into that map, past the title screen
+  if (new URLSearchParams(location.search).has('map')) {
+    ScreenController.showWorld();
+    return;
+  }
 
   activeTitleScreen = new TitleScreen(gameContainer);
   activeTitleScreen.init();
-
-  gameContainer.classList.add('fade-in');
 }, 1000);
 
 window.addEventListener('keydown', (e) => {

@@ -217,11 +217,17 @@ export default class Sprite {
     this.isShadowLoaded && ctx.drawImage(this.shadow, x - 4, y - 2);
     const animation = this.animations[this.currentAnimation];
     const [frameX, frameY] = animation.frames[this.frameIndex];
+    // ponytail: #65 test. A sheet per light, stacked in one image; the map says which one for the tile under the
+    // feet (0, the top sheet, on every other map). Changes tile by tile, not pixel by pixel.
+    const { x: gx, y: gy, lightMap } = this.gameObject;
+    const lit =
+      lightMap?.[`${Math.round(gx / 32) * 32},${Math.round(gy / 32) * 32}`] ??
+      0;
     this.isLoaded &&
       ctx.drawImage(
         this.image,
         frameX * this.frameWidth,
-        frameY * this.frameHeight,
+        frameY * this.frameHeight + lit * 256,
         this.frameWidth,
         this.frameHeight,
         x,

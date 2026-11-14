@@ -27,6 +27,8 @@ export function loadPlayerData(): PlayerData | null {
 }
 
 export function savePlayerData(data: PlayerData) {
+  // ponytail: #65 test, nothing is saved from a test map (/?map=...), so the real save keeps its position
+  if (new URLSearchParams(location.search).has('map')) return;
   try {
     // Ensure we only keep primitive values, no circular refs
     const {

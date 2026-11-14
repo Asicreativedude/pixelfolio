@@ -140,6 +140,11 @@ export interface MapConfig {
   cutsceneSpaces?: Record<string, EventWrapper[]>;
   beginingCutscene?: CutsceneEvent[];
   projectReveal?: Record<string, any>;
+  // #65 test room (maps.ts)
+  baseObjects?: Record<string, any>;
+  light?: Record<string, number>;
+  camera?: { x: number; y: number };
+  background?: string;
 }
 
 // export interface TitleScreenConfig {

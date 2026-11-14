@@ -26,6 +26,7 @@ export default class GameObject {
   talking: any[]; // List of cutscene interactions for the object
   takeShroom: any[]; // Custom interaction for a special event
   isPerson: boolean = false;
+  lightMap?: Record<string, number>; // #65 test: from the map, read by the sprite
 
   constructor(config: GameObjectConfig) {
     this.id = null;
@@ -53,6 +54,7 @@ export default class GameObject {
 
   mount(map: any) {
     this.isMounted = true;
+    this.lightMap = map.light;
     if (this.isPerson) {
       map.addWall(this.x, this.y);
 

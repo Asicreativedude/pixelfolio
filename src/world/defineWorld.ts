@@ -7,6 +7,9 @@ import KeyPressListener from '../utils/keyPressListener';
 import { ScreenController } from '../utils/screenContorller';
 import { getPlayerData } from '../utils/progressTracker';
 
+// ponytail: #65 test, /?map=Clutter starts that map instead of the Hall
+const testMap = worldMaps[new URLSearchParams(location.search).get('map') ?? ''];
+
 export default class World {
   element: HTMLElement;
   canvas: HTMLCanvasElement;
@@ -47,6 +50,9 @@ export default class World {
     if (this.map.gameObjects.npcASI) {
       this.cameraPerson = this.map.gameObjects.npcASI;
     }
+    if (this.map.camera) {
+      this.cameraPerson = this.map.camera;
+    }
     this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.lowerImage);
     //Draw Game Objects
     Object.values(this.map.gameObjects as GameObject)
@@ -66,7 +72,7 @@ export default class World {
     //Draw Upper Layer
     this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.upperImage);
     //Draw Debug Walls
-    this.map.drawWallDebug(this.ctx, this.cameraPerson);
+    testMap || this.map.drawWallDebug(this.ctx, this.cameraPerson);
   }
   startGameLoop() {
     let previousMs: number;
@@ -122,7 +128,10 @@ export default class World {
     mapConfig: MapConfig,
     heroInitialState: HeroInitialState | null = null
   ) {
-    const freshObjects = createGameObjects(hallBaseObjects);
+    const freshObjects = createGameObjects(
+      mapConfig.baseObjects ?? hallBaseObjects
+    );
+    this.canvas.style.background = mapConfig.background ?? '';
     const playerData = getPlayerData();
     this.map = new WorldMap({ ...mapConfig, gameObjects: freshObjects });
     playerData.lastMap = this.map;
@@ -149,7 +158,7 @@ export default class World {
 
   init(): void {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.startMap(worldMaps.Hall);
+    this.startMap(testMap ?? worldMaps.Hall);
 
     this.directionInput = new DirectionInput();
     this.directionInput.init();

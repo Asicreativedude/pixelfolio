@@ -224,5 +224,25 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
     light direction on figures is left or right only. Not tested: more than this one room, walking in the game,
     a phone. The report's warning stands: this is the most expensive direction and the hardest to keep
     consistent. Waiting for Asi's reaction.
+- Lived-in clutter in the game (Asi: "lets try putting it in the game"). Open `/?map=Clutter` or
+  `/?map=ClutterEvening` on the dev server; it skips the title screen and saves nothing, so the real save is untouched.
+  `art-tests/claude-drawn/directions/make_d06_game.py` exports to `art-tests/claude-drawn/game/`: the room without its
+  cast (day and evening, 352x240, one screen pixel per art pixel), the four cast sheets in the room's colours, and
+  `clutter.json` (walls, and which light each tile gives). Frames taken from the game's canvas: `game/in-game-*.png`.
+  - Works: walking, collisions, the dog walking, talking to the three characters, day and evening.
+  - Characters are lit by the room: each sheet holds 12 versions (6 light levels x light from left or right) and the
+    game picks one by the tile under the feet. The change is per tile, so it snaps when a figure crosses a tile edge.
+  - The room is 352x240 on a 640x360 screen, about 30% of it. The camera is fixed for this map, so the room sits
+    centred with dark teal around it.
+  - Only 18 of the 45 floor tiles are free to stand on. The clutter that makes the still look good takes the rest.
+  - The shadow under the feet is a see-through dark teal blob in the sheet, so it is not held to the palette: a frame
+    has 49 to 56 colours, the art has 44.
+  - The dialogue box and the title screen are still in the old style and clash with the room.
+  - Nothing can walk behind furniture: the room is one flat image, so every tile a prop touches is blocked.
+  - Not tested: a phone (no touch controls on this branch; under 992 px wide the page stretches the canvas), a second
+    room, a room larger than the screen with a moving camera.
+  - Engine changes are small and marked `#65 test`: a map can bring its own objects, a fixed camera, a background
+    colour and a light table (`maps.ts`, `defineWorld.ts`, `worldMap.ts`, `sprite.ts`, `gameObject.ts`, `main.ts`,
+    `progressTracker.ts`). The red wall outlines are hidden on test maps.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.

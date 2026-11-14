@@ -14,6 +14,8 @@ export default class WorldMap {
   upperImage: HTMLImageElement;
   isCutscenePlaying: boolean;
   beginingCutsceneIndex: number;
+  light: Record<string, number>; // #65 test: which light a figure takes on each tile (sprite.ts)
+  camera?: { x: number; y: number }; // #65 test: a fixed camera for a room smaller than the screen
 
   constructor(config: MapConfig) {
     this.world = null;
@@ -34,6 +36,8 @@ export default class WorldMap {
     this.isCutscenePlaying = false;
 
     this.beginingCutsceneIndex = 0;
+    this.light = config.light || {};
+    this.camera = config.camera;
   }
 
   // Draws map layers relative to the camera’s position.
