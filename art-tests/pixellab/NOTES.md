@@ -253,5 +253,14 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   the middle of the room is plain boards; the desk corner, plants and window view repeat the small room; the walk-behind layer
   is only lamp shades and was not seen working in a frame; a figure standing right below another covers it with its head;
   dialogue box still in the old style; no phone test.
+- Studio, second pass (Asi: "The floor looks very much repetitive and like a bit broken. Let's work on that and the other weak
+  points"). Floor: the blotches came from a blob noise and from wear patches that crossed the boards; now a plank is one of two
+  woods half a step apart (new ramp WOOD, 3 colours, 48 in all) and tone changes at plank edges only, in both rooms, day and
+  evening. Middle of the room: a fish tank on a cabinet (it is the middle's lamp in the evening) and a court taped round the
+  table tennis. Walk-behind: `thing(tall=True)` marks what is height, not depth; the hero now stands behind the tank, the metal
+  shelving and the arcade, seen in the game (`game/in-game-studio-*behind*.png`). The second window has its own skyline.
+  Still open: light pools in the evening have smooth outlines now that the floor has no noise; the desk corner and the two
+  potted plants are still the small room's drawings; a figure right below another covers it with its head (the engine's
+  sorting, same in the Hall); the small room's `in-game-*.png` frames show the old floor; dialogue box, title screen, phone.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.

@@ -1,7 +1,7 @@
 # Direction 6, "Lived-in clutter" (reports/Pixel art style directions.md), as one still.
 # The room is redrawn; only the layout of the office corner and the cast sheets come from the existing test.
-#   palette: nine ramps of seven steps. Every ramp starts on the same deep teal (K) and ends on the same pale
-#     amber (HI), so shadow is teal and light is amber whatever the material. 45 colours at most.
+#   palette: ten ramps of seven steps. Every ramp starts on the same deep teal (K) and ends on the same pale
+#     amber (HI), so shadow is teal and light is amber whatever the material. 48 colours at most.
 #   environment: no outlines. A pixel is a material and a level on that material's ramp; an object is told from
 #     its neighbour by a lit top edge, a dark bottom edge and the shadow it casts down and right.
 #   light is painted in: pools of level (window, lamp, fairy lights) are added before the ramp is looked up, and
@@ -28,9 +28,10 @@ RAMPS = [None,
          ['124855', '14767c', '22a79b', '6cd3b2', 'c2edc4'],    # TEAL
          ['2d3a46', '6a5a55', 'a8845e', 'dba97c', 'f0d09c'],    # CARD   cardboard, cork, skin
          ['33294a', '6a2f4d', 'a8423f', 'd96a42', 'f4a25c'],    # RED
-         ['22364c', '3e566c', '8fa6a0', 'c9cdb4', 'f0e6c0']]    # PAPER  white things; its darks are METAL's
+         ['22364c', '3e566c', '8fa6a0', 'c9cdb4', 'f0e6c0'],    # PAPER  white things; its darks are METAL's
+         ['1c3a44', '655f52', 'a57a4a', 'd5a055', 'eab760']]    # WOOD   the floor's second wood: half a step off FLOOR
 RAMPS = [None] + [[K] + r + [HI] for r in RAMPS[1:]]
-FLOOR, DESK, WALL, GREEN, METAL, TEAL, CARD, RED, PAPER = range(1, 10)
+FLOOR, DESK, WALL, GREEN, METAL, TEAL, CARD, RED, PAPER, WOOD = range(1, 11)
 FLAT = 50                       # material + FLAT: not lit, not shadowed (screens, bulbs, the sky)
 
 mat, lvl, shd = Image.new('L', (W, H)), Image.new('L', (W, H)), Image.new('L', (W, H))
@@ -93,6 +94,23 @@ def light(amp, blur, draw):
 
 
 # --- room shell -----------------------------------------------------------------------------------------------
+def boards(x0, x1, y0, y1, rnd):
+    """Floorboards. A plank is one of two woods half a step apart, and it is that wood from end to end: the
+    floor's tone changes at plank edges only, never in patches across them."""
+    for y in range(y0, y1, 8):
+        x = x0 - rnd.randrange(40)
+        while x < x1:
+            n = rnd.randrange(40, 96)
+            a, b = (FLOOR, WOOD) if rnd.random() < .55 else (WOOD, FLOOR)
+            R(x, y, n, 8, a, 3.3)
+            if rnd.random() < .6:                               # one streak of grain, in the other wood
+                g = rnd.randrange(10, n - 12)
+                R(x + rnd.randrange(4, n - g - 2), y + rnd.randrange(2, 6), g, 1, b, 3.3)
+            R(x, y, 1, 8, FLOOR, 2.3)                           # the joint at its end
+            x += n
+        R(x0, y + 7, x1 - x0, 1, FLOOR, 2.3)
+
+
 def shell():
     rnd = random.Random(3)
     R(16, 8, 320, 56, WALL, 3.1)
@@ -107,17 +125,7 @@ def shell():
     for x in range(20, 336, 9):
         R(x + rnd.randrange(3), 47 + rnd.randrange(8), 2, 1, WALL, 2.3)                        # scuffs
     R(16, 57, 320, 7, DESK, 2.8); R(16, 57, 320, 1, DESK, 4); R(16, 62, 320, 2, DESK, 1.6)    # skirting
-    for i in range(20):                                        # floorboards
-        y, x = 64 + 8 * i, 16 - rnd.randrange(40)
-        while x < 336:
-            n = rnd.randrange(34, 80)
-            R(x, y, n, 8, FLOOR, 3 + rnd.choice((-.4, -.2, 0, 0, .2, .35)))
-            R(x, y, 1, 8, FLOOR, 1.8)
-            for _ in range(2):
-                R(x + rnd.randrange(3, n - 16), y + rnd.randrange(2, 6), rnd.randrange(4, 14), 1, FLOOR, 2.5)
-            R(x + 2, y + 3, 1, 1, FLOOR, 1.5); R(x + n - 3, y + 3, 1, 1, FLOOR, 1.5)             # nails
-            x += n
-        R(16, y + 7, 320, 1, FLOOR, 2)
+    boards(16, 336, 64, 224, rnd)
     R(0, 0, W, 8, 0, 0); R(0, 0, 16, H, 0, 0); R(336, 0, 16, H, 0, 0); R(0, 224, 160, 16, 0, 0); R(192, 224, 160, 16, 0, 0)
     T(16, 64, 320, 3, -1); R(160, 224, 32, 1, FLOOR, 1.5)      # the wall's shadow, the door sill
 
@@ -156,7 +164,10 @@ def fairy_lights(strands=((120, 14, 144, 16, 7), (190, 16, 212, 19, 6), (232, 20
     light(1 if EVE else .7, 2.5, lambda d: [d.ellipse((x - 4, y - 3, x + 5, y + 6), fill=255) for x, y in bulbs])
 
 
-def window(x, y, blind=(5, 3), sun=True, sill=True):
+TOWN = ((0, 26, 5, 2), (4, 21, 6, 1), (11, 28, 5, 2), (15, 19, 6, 1), (22, 25, 7, 2))    # the skyline: x, top, width, tone
+
+
+def window(x, y, blind=(5, 3), sun=True, sill=True, town=TOWN):
     sky = ((0, 12, TEAL, 3), (10, 6, TEAL, 4), (15, 5, TEAL, 5), (19, 15, FLOOR, 5), (27, 7, RED, 5)) if not EVE else \
           ((0, 10, METAL, 1), (9, 8, TEAL, 1), (16, 7, TEAL, 2), (22, 5, RED, 2), (26, 4, RED, 3), (29, 5, RED, 4))     # dusk
     with prop(cast=(2, 3)):
@@ -165,7 +176,7 @@ def window(x, y, blind=(5, 3), sun=True, sill=True):
             R(px - 1, y + 2, 31, 36, PAPER, 2)
             for dy, h, m, l in sky:
                 R(px, y + 3 + dy, 29, h, m + FLAT, l)
-            for bx, by, bw, m in ((0, 26, 5, 2), (4, 21, 6, 1), (11, 28, 5, 2), (15, 19, 6, 1), (22, 25, 7, 2)):
+            for bx, by, bw, m in town:
                 bx = bx if n == 0 else 29 - bx - bw
                 R(px + bx, y + by, bw, 37 - by, METAL + FLAT, m - EVE)
                 for wy in range(by + 2, 36, 3 - EVE):           # more windows are lit in the evening
@@ -674,7 +685,7 @@ def render():
     for i in range(W * H):
         m, v = M[i], V[i] / U
         if m and m < FLAT:
-            v += total[i] - S[i] / 255 - F[i] / 255 * 1.3 + (N[i] - 128) / 128 * (.3 if m in (FLOOR, WALL) else .12)   # brushwork on the big surfaces
+            v += total[i] - S[i] / 255 - F[i] / 255 * 1.3 + (N[i] - 128) / 128 * (.3 if m == WALL else 0 if m in (FLOOR, WOOD) else .12)   # brushwork on the plaster; planks stay whole
         out.append(rgb(RAMPS[m % FLAT][max(0, min(6, int(v + .5)))] if m else K))
     cast(out, total)
     im = Image.new('RGB', (W, H)); im.putdata(out)

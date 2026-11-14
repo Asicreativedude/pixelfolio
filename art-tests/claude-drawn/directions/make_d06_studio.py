@@ -16,24 +16,25 @@ from PIL import Image, ImageChops, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))     # python3 -I leaves the script's folder out
 import make_d06_lived_in_clutter as m
 from make_d06_lived_in_clutter import (R, E, G, L, T, prop, light, note, FLOOR, DESK, WALL, GREEN, METAL, TEAL,
-                                       CARD, RED, PAPER, FLAT)
+                                       CARD, RED, PAPER, WOOD, FLAT)
 
 W, H, TILE, COLS, ROWS = 896, 512, 32, 28, 16
 X0, X1, Y0, Y1 = 16, W - 16, 64, H - 16     # the floor
 DOOR = 13                                   # the door gap is this column of the bottom edge
 SPOTS = {'hero': [DOOR, 14], 'dana': [18, 2], 'visitor': [2, 3], 'dog': [[24, 14], [25, 14]]}
-THINGS = []                                 # (mask, solid) of every thing of the last build
+THINGS = []                                 # (mask, solid, tall) of every thing of the last build
 
 
 @contextmanager
-def thing(solid=True):
+def thing(solid=True, tall=False):
     """What is drawn inside is one thing on the tile grid (a desk with all that is on it, a rug): its mask is
     kept, with whether it is solid or flat (may be stood on). What hangs on the wall above the floor is not
-    wrapped: rows 0 and 1 are never free."""
+    wrapped: rows 0 and 1 are never free. tall: it stands on the tile row of its foot and all of it above
+    that row is height, not depth (a lamp, a cabinet seen from the front), so a figure can stand behind it."""
     m0, l0 = m.mat.copy(), m.lvl.copy()
     yield
     d = ImageChops.lighter(ImageChops.difference(m.mat, m0), ImageChops.difference(m.lvl, l0))
-    THINGS.append((d.point(lambda v: 255 * (v > 0)), solid))
+    THINGS.append((d.point(lambda v: 255 * (v > 0)), solid, tall))
 
 
 def tiles():
@@ -43,8 +44,16 @@ def tiles():
     a figure would stand on them) cover more than 10% of those rows. Rows 0, 1, 15 and columns 0, 27 are wall.
     Upper layer: in a free tile, the pixels of solid things that go on below the tile's bottom edge. Such a thing
     stands in front of a figure on that tile (a chair back, the top of a monitor, a lamp shade), so the game
-    draws those pixels over the figures."""
-    solids = [(np.asarray(mk) > 0, mk.getbbox()[3]) for mk, solid in THINGS if solid and mk.getbbox()]
+    draws those pixels over the figures. What a tall thing has above the row of its foot blocks nothing and is
+    upper layer wherever the tile is free."""
+    solids, high = [], np.zeros((H, W), bool)
+    for mk, solid, tall in THINGS:
+        if solid and mk.getbbox():
+            a, bottom = np.asarray(mk) > 0, mk.getbbox()[3]
+            if tall:
+                cut = (bottom - 1) // TILE * TILE
+                high[:cut] |= a[:cut]; a = a.copy(); a[:cut] = False
+            solids.append((a, bottom))
     free, upper = set(), np.zeros((H, W), bool)
     for row in range(2, ROWS - 1):
         y0, y1 = row * TILE, row * TILE + TILE
@@ -58,7 +67,7 @@ def tiles():
             s, o = stand[:, col * TILE:col * TILE + TILE], over[:, col * TILE:col * TILE + TILE]
             if (s | o).mean() > .5 or (s | o)[12:].mean() > .2 or s[12:].mean() > .1:
                 continue
-            free.add((col, row)); upper[y0:y1, col * TILE:col * TILE + TILE] = o
+            free.add((col, row)); upper[y0:y1, col * TILE:col * TILE + TILE] = o | high[y0:y1, col * TILE:col * TILE + TILE]
     return free, Image.fromarray(upper.astype(np.uint8) * 255)
 
 
@@ -118,17 +127,7 @@ def shell():
     for x in range(20, X1, 9):
         R(x + rnd.randrange(3), 47 + rnd.randrange(8), 2, 1, WALL, 2.3)                        # scuffs
     R(X0, 57, fw, 7, DESK, 2.8); R(X0, 57, fw, 1, DESK, 4); R(X0, 62, fw, 2, DESK, 1.6)       # skirting
-    for i in range((Y1 - Y0) // 8):                            # floorboards
-        y, x = Y0 + 8 * i, X0 - rnd.randrange(40)
-        while x < X1:
-            n = rnd.randrange(34, 80)
-            R(x, y, n, 8, FLOOR, 3 + rnd.choice((-.4, -.2, 0, 0, .2, .35)))
-            R(x, y, 1, 8, FLOOR, 1.8)
-            for _ in range(2):
-                R(x + rnd.randrange(3, n - 16), y + rnd.randrange(2, 6), rnd.randrange(4, 14), 1, FLOOR, 2.5)
-            R(x + 2, y + 3, 1, 1, FLOOR, 1.5); R(x + n - 3, y + 3, 1, 1, FLOOR, 1.5)             # nails
-            x += n
-        R(X0, y + 7, fw, 1, FLOOR, 2)
+    m.boards(X0, X1, Y0, Y1, rnd)
     R(0, 0, W, 8, 0, 0); R(0, 0, X0, H, 0, 0); R(X1, 0, W - X1, H, 0, 0)
     R(0, Y1, DOOR * TILE, H - Y1, 0, 0); R(DOOR * TILE + TILE, Y1, W, H - Y1, 0, 0)
     T(X0, Y0, fw, 3, -1); R(DOOR * TILE, Y1, TILE, 1, FLOOR, 1.5)                               # the wall's shadow, the door sill
@@ -177,18 +176,46 @@ def scraps(rnd, n):
 
 
 def wear(rnd):
-    """The floor of a big room: worn paths lighter, a few stains darker, long scratches."""
-    for x, y, w, h, d in ((400, 430, 70, 5, .5), (392, 438, 90, 6, .5), (410, 420, 46, 4, .5), (300, 140, 80, 5, .4),
-                          (420, 300, 60, 4, .4), (200, 330, 70, 5, .4), (640, 180, 90, 5, .4), (700, 400, 60, 4, .4),
-                          (120, 136, 60, 4, .4)):
-        T(x, y, w, h, d)
-    for x, y, w, h in ((250, 280, 14, 9), (690, 330, 18, 10), (140, 400, 12, 8), (560, 420, 16, 9), (800, 250, 12, 8),
-                       (330, 200, 10, 7)):
-        with prop(cast=None, rim=0):
-            E(x, y, w, h, FLOOR, 2.3); E(x + 2, y + 1, w - 5, h - 4, FLOOR, 2.6)
-    for _ in range(26):
+    """What use has left on the floor: a few scratches along the boards, and a court taped out for the table
+    tennis, its tape worn through in places."""
+    for _ in range(10):
         x, y = rnd.randrange(X0 + 10, X1 - 40), rnd.randrange(Y0 + 30, Y1 - 6)
-        L([(x, y), (x + rnd.randrange(8, 26), y + rnd.randrange(-3, 4))], FLOOR, 2.4)
+        L([(x, y), (x + rnd.randrange(8, 22), y + rnd.randrange(-1, 2))], FLOOR, 2.3)
+    x0, y0, x1, y1 = 200, 270, 346, 362
+    for x in range(x0, x1, 4):
+        for y in (y0, y1):
+            if rnd.random() < .8:
+                R(x, y, 4, 2, PAPER, 4.6)
+    for y in range(y0, y1, 4):
+        for x in (x0, x1 - 2):
+            if rnd.random() < .8:
+                R(x, y, 2, 4, PAPER, 4.6)
+
+
+def aquarium(x, y):
+    """A fish tank on a low cabinet, 60 wide and 56 high. The tank is lit from its lid; pools in room_lights()."""
+    with prop(cast=(3, 4)):
+        R(x, y + 38, 60, 18, DESK, 3); R(x, y + 38, 60, 2, DESK, 4.2); R(x + 29, y + 41, 2, 14, DESK, 2)       # cabinet, two doors
+        R(x + 13, y + 46, 5, 1, DESK, 4.6); R(x + 42, y + 46, 5, 1, DESK, 4.6); R(x, y + 55, 60, 1, DESK, 1.6)
+        R(x + 2, y, 56, 38, METAL, 1.6); R(x + 2, y, 56, 3, METAL, 3)                                           # frame, lid
+        R(x + 4, y + 3, 52, 32, TEAL + FLAT, 2); R(x + 4, y + 3, 52, 12, TEAL + FLAT, 3); R(x + 4, y + 3, 52, 2, TEAL + FLAT, 5)
+        R(x + 4, y + 31, 52, 4, CARD + FLAT, 4); R(x + 9, y + 30, 9, 2, CARD + FLAT, 4); R(x + 38, y + 30, 12, 1, CARD + FLAT, 4)     # sand
+        for px, h in ((8, 16), (11, 10), (14, 20), (41, 22), (45, 13), (50, 8)):                                # weed
+            R(x + px, y + 31 - h, 2, h, GREEN + FLAT, 4); R(x + px + 1, y + 31 - h + 2, 1, h - 2, GREEN + FLAT, 3)
+        R(x + 22, y + 26, 9, 5, METAL + FLAT, 3); R(x + 24, y + 24, 5, 2, METAL + FLAT, 4); R(x + 25, y + 28, 3, 3, METAL + FLAT, 1)  # a rock with a hole
+        for px, py, c, back in ((19, 9, RED, 1), (31, 15, FLOOR, 0), (26, 20, RED, 0), (46, 8, FLOOR, 1), (36, 23, PAPER, 1)):       # fish
+            R(x + px, y + py, 5, 3, c + FLAT, 5); R(x + px + (5 if back else -2), y + py - 1 + (px % 2), 2, 4 - (px % 2), c + FLAT, 4)
+            R(x + px + (0 if back else 4), y + py + 1, 1, 1, METAL + FLAT, 0)
+        for bx, by in ((34, 8), (35, 12), (33, 17), (16, 6)):                                                   # bubbles
+            R(x + bx, y + by, 1, 1, PAPER + FLAT, 6)
+    with prop(cast=(1, 1)):                                     # on the lid: fish food, a net
+        R(x + 6, y - 5, 5, 5, RED, 4); R(x + 6, y - 5, 5, 1, PAPER, 5); R(x + 40, y - 2, 12, 2, METAL, 3.4); R(x + 50, y - 4, 5, 4, GREEN, 3.4)
+    if m.EVE:                                                   # the tank is the middle of the room's lamp
+        light(1, 3, [(x - 6, y - 8), (x + 64, y - 10), (x + 72, y + 30), (x + 66, y + 66), (x - 4, y + 70), (x - 12, y + 26)])
+        light(.8, 5, [(x - 22, y + 30), (x + 30, y + 22), (x + 84, y + 36), (x + 90, y + 84), (x + 26, y + 98), (x - 30, y + 80)])
+        light(.5, 8, [(x - 50, y + 4), (x + 40, y - 26), (x + 112, y + 16), (x + 120, y + 96), (x + 30, y + 124), (x - 56, y + 96)])
+    else:
+        light(.5, 3, [(x - 6, y + 50), (x + 66, y + 50), (x + 72, y + 70), (x - 10, y + 72)])
 
 
 # --- on the wall ----------------------------------------------------------------------------------------------
@@ -928,7 +955,7 @@ def draw():
     m.board(328, 12); m.clock(396, 18); m.poster(422, 14, sock=(308, 46))
     radiator(452, 40)
     with thing():
-        m.window(494, 14, blind=(2, 6), sun=False, sill=False)
+        m.window(494, 14, blind=(2, 6), sun=False, sill=False, town=((0, 22, 7, 1), (7, 29, 4, 2), (12, 24, 5, 2), (18, 17, 5, 1), (24, 27, 5, 2)))
     whiteboard(580, 14); hooks(638, 20); frames(770, 8)
     m.fairy_lights(((304, 14, 328, 16, 7), (374, 16, 396, 19, 6), (416, 20, 448, 15, 8), (448, 15, 492, 17, 9),
                     (700, 12, 740, 14, 8), (740, 14, 770, 11, 6), (826, 12, 878, 16, 9)))
@@ -972,7 +999,7 @@ def draw():
     # the reading corner
     with thing():
         armchair(802, 142)
-    with thing():
+    with thing(tall=True):
         floor_lamp(854, 186)
     with thing():
         m.book_pile(770, 128)
@@ -992,9 +1019,9 @@ def draw():
     # the lounge
     with thing():
         sofa(512, 233)
-    with thing():
+    with thing(tall=True):
         tall_plant(488, 272)
-    with thing():
+    with thing(tall=True):
         floor_lamp(624, 284)
     with thing():
         beanbag(610, 292)
@@ -1005,8 +1032,10 @@ def draw():
     # the middle of the room
     with thing():
         pingpong(226, 292)
+    with thing(tall=True):
+        aquarium(354, 232)
     # right wall
-    with thing():
+    with thing(tall=True):
         arcade(834, 226)
     with thing():
         cabinet(822, 320)
@@ -1019,7 +1048,7 @@ def draw():
     # left wall: amp, storage corner
     with thing():
         amp(34, 290)
-    with thing():
+    with thing(tall=True):
         rack(34, 350)
     with thing():
         m.box(35, 420, 28, 9, 17, -.2, 12)
@@ -1044,7 +1073,7 @@ def draw():
             R(782, 470, 10, 6, TEAL, 3); R(782, 470, 4, 6, TEAL, 2); R(789, 471, 3, 2, PAPER, 5)
     with thing():
         bench(324, 454)
-    with thing():
+    with thing(tall=True):
         tall_plant(488, 462)
     with thing(False):
         for sx, sy, c in ((392, 482, RED), (401, 484, RED), (454, 481, METAL), (463, 483, METAL)):
