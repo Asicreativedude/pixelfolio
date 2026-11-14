@@ -114,5 +114,13 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   high resolution (left) and as pixel art at game scale (right). Custom palettes, not ENDESGA 32. The line family
   holds up in both; the painted family only works smooth, its pixel version turns to noise. About 40 minutes.
   Retool's old art could not be found online, so it is not represented.
+- Asi on `illustrated.png`: "The drawings look baddd. Maybe try /anidoodle". He also sent Retool's art:
+  hannah-meng.com/retool-brand (flat colour fields, isometric solids, thin tone-on-tone grid lines, white objects).
+  `office-iso.png`: the office redrawn with the anidoodle skill's isometric kit in a hand adapted from that set:
+  one hue family per picture, a ruled iso grid across the field, three tones per form, no outlines, white for
+  what matters, one accent (the hero's teal shirt). Orange large, purple and coral below: one drawing, one map
+  colour each. Source: `anidoodle/officeIso.ts` (needs the anidoodle engine to render; 1920×1080, vector, not
+  pixel art, not ENDESGA 32). About 45 minutes. Known flaws: hands are mittens, the man stands stiff and
+  symmetrical, the dog reads close to a fox.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
