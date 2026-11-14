@@ -30,7 +30,7 @@ Times are wall clock from submit to done, on the Free queue.
 | A3w | Walk on A3 | PixMiniMax, ENDESGA 32, 8 frames/direction, 80×80 canvas | ≈2 min per direction: S, E, N generated; W mirrored | 3 | Keeps his chunky style and size, 7–9 colours, all ENDESGA 32 (teal → `#0099db`). The side view inherits A3's wrong hair and face. Asi: "the side view of the character is off" |
 
 Total: about 25 minutes of wall clock for 5 assets, almost all of it queue time (Free runs one job at a time).
-13 of 40 generations used.
+11 of 40 generations used (account page).
 
 ## Asi's verdict so far
 
