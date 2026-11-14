@@ -144,9 +144,9 @@ def sign(x, y):
         light(.6, 4, [(x - 6, y + 12), (x + 22, y + 10), (x + 32, y + 42), (x - 8, y + 44)])
 
 
-def fairy_lights():
+def fairy_lights(strands=((120, 14, 144, 16, 7), (190, 16, 212, 19, 6), (232, 20, 264, 15, 8))):
     bulbs = []
-    for x0, y0, x1, y1, sag in ((120, 14, 144, 16, 7), (190, 16, 212, 19, 6), (232, 20, 264, 15, 8)):
+    for x0, y0, x1, y1, sag in strands:
         seg = [(round(x0 + (x1 - x0) * t / 12), round(y0 + (y1 - y0) * t / 12 + sag * (1 - (t / 6 - 1) ** 2))) for t in range(13)]
         L(seg, METAL, 1.2); bulbs += seg[1:-1:2]
         if EVE:                                                 # a wash on the wall under each strand
@@ -156,7 +156,7 @@ def fairy_lights():
     light(1 if EVE else .7, 2.5, lambda d: [d.ellipse((x - 4, y - 3, x + 5, y + 6), fill=255) for x, y in bulbs])
 
 
-def window(x, y):
+def window(x, y, blind=(5, 3), sun=True, sill=True):
     sky = ((0, 12, TEAL, 3), (10, 6, TEAL, 4), (15, 5, TEAL, 5), (19, 15, FLOOR, 5), (27, 7, RED, 5)) if not EVE else \
           ((0, 10, METAL, 1), (9, 8, TEAL, 1), (16, 7, TEAL, 2), (22, 5, RED, 2), (26, 4, RED, 3), (29, 5, RED, 4))     # dusk
     with prop(cast=(2, 3)):
@@ -171,19 +171,21 @@ def window(x, y):
                 for wy in range(by + 2, 36, 3 - EVE):           # more windows are lit in the evening
                     if (wy + bx) % 2:
                         R(px + bx + 1 + (wy % 2) * 2, y + wy, 1, 1, FLOOR + FLAT, 5)
-        if not EVE:
+        if sun and not EVE:
             E(x + 8, y + 16, 9, 9, FLOOR + FLAT, 6)                                                   # the sun
-        for i in range(5):                                      # a blind, half down and not level
+        for i in range(blind[0]):                               # a blind, half down and not level
             R(x + 3, y + 3 + 3 * i, 29, 2, PAPER, 4.4 - (i % 2) * .6)
-        for i in range(3):
+        for i in range(blind[1]):
             R(x + 36, y + 3 + 3 * i, 29, 2, PAPER, 4.4 - (i % 2) * .6)
-        R(x + 36, y + 12, 14, 1, PAPER, 3.6); R(x + 61, y + 12, 1, 14, PAPER, 4); R(x + 60, y + 26, 3, 2, PAPER, 4.6)
-    with prop(cast=(1, 1)):                                     # on the sill: cactus, mug, two books
-        R(x + 54, y + 27, 4, 9, GREEN, 3.4); R(x + 54, y + 27, 1, 9, GREEN, 4.4); R(x + 58, y + 31, 2, 2, GREEN, 3); R(x + 59, y + 29, 2, 3, GREEN, 3)
-        R(x + 52, y + 35, 8, 5, RED, 3.6); R(x + 58, y + 36, 2, 4, RED, 2.6)
-    with prop(cast=(1, 1)):
-        R(x + 8, y + 35, 12, 3, TEAL, 3); R(x + 9, y + 32, 11, 3, RED, 3.6); R(x + 8, y + 37, 12, 1, PAPER, 5); R(x + 9, y + 34, 11, 1, PAPER, 5)
-        R(x + 24, y + 33, 5, 7, PAPER, 5); R(x + 28, y + 33, 1, 7, PAPER, 3.6); R(x + 29, y + 35, 2, 3, PAPER, 4)
+        cord = 3 + 3 * blind[1]
+        R(x + 36, y + cord, 14, 1, PAPER, 3.6); R(x + 61, y + cord, 1, 14, PAPER, 4); R(x + 60, y + cord + 14, 3, 2, PAPER, 4.6)
+    if sill:
+        with prop(cast=(1, 1)):                                 # on the sill: cactus, mug, two books
+            R(x + 54, y + 27, 4, 9, GREEN, 3.4); R(x + 54, y + 27, 1, 9, GREEN, 4.4); R(x + 58, y + 31, 2, 2, GREEN, 3); R(x + 59, y + 29, 2, 3, GREEN, 3)
+            R(x + 52, y + 35, 8, 5, RED, 3.6); R(x + 58, y + 36, 2, 4, RED, 2.6)
+        with prop(cast=(1, 1)):
+            R(x + 8, y + 35, 12, 3, TEAL, 3); R(x + 9, y + 32, 11, 3, RED, 3.6); R(x + 8, y + 37, 12, 1, PAPER, 5); R(x + 9, y + 34, 11, 1, PAPER, 5)
+            R(x + 24, y + 33, 5, 7, PAPER, 5); R(x + 28, y + 33, 1, 7, PAPER, 3.6); R(x + 29, y + 35, 2, 3, PAPER, 4)
     with prop(cast=(2, 3)):
         R(x - 4, y + 40, 76, 4, PAPER, 4.4); R(x - 4, y + 43, 76, 1, PAPER, 2.4)
 
@@ -226,7 +228,12 @@ def clock(x, y):
         R(x + 9, y + 5, 1, 5, METAL, .6); R(x + 10, y + 9, 4, 1, METAL, .6); R(x + 9, y + 9, 1, 1, RED, 4.5)
 
 
-def poster(x, y):
+def socket(x, y):
+    with prop(cast=(1, 1)):                                      # socket and switch
+        R(x, y, 7, 8, PAPER, 4.6); R(x + 2, y + 2, 1, 2, PAPER, 2); R(x + 4, y + 2, 1, 2, PAPER, 2); R(x + 2, y + 5, 3, 1, PAPER, 2)
+
+
+def poster(x, y, sock=(124, 46)):
     with prop(cast=(1, 2), rim=0):
         R(x, y, 22, 30, PAPER, 5); R(x + 1, y + 1, 20, 28, RED, 2.5); E(x + 6, y + 5, 11, 11, FLOOR, 5.5)
         G([(x + 1, y + 28), (x + 8, y + 15), (x + 13, y + 22), (x + 17, y + 17), (x + 20, y + 23), (x + 20, y + 28)], TEAL, 2.5)
@@ -238,8 +245,8 @@ def poster(x, y):
         for i in range(9):
             R(x - 44 + 4 * (i % 3), y + 18 + 3 * (i // 3), 2, 1, PAPER, 3)
         R(x - 40, y + 21, 2, 1, RED, 4.5)
-    with prop(cast=(1, 1)):                                      # socket and switch
-        R(124, 46, 7, 8, PAPER, 4.6); R(126, 48, 1, 2, PAPER, 2); R(128, 48, 1, 2, PAPER, 2); R(126, 51, 3, 1, PAPER, 2)
+    if sock:
+        socket(*sock)
 
 
 def book_row(x, base, end, rnd, lo=9, hi=16):
@@ -251,8 +258,8 @@ def book_row(x, base, end, rnd, lo=9, hi=16):
         x += w
 
 
-def bookshelf(x, y):
-    rnd = random.Random(8)
+def bookshelf(x, y, seed=8):
+    rnd = random.Random(seed)
     with prop(cast=(3, 4)):
         R(x, y + 8, 64, 66, DESK, 2.8); R(x, y, 64, 8, DESK, 3.9); R(x + 61, y + 8, 3, 66, DESK, 2); R(x, y + 8, 2, 66, DESK, 3.4)
         R(x + 6, y + 3, 22, 1, DESK, 3.3); R(x + 34, y + 5, 18, 1, DESK, 3.3)
@@ -286,7 +293,7 @@ def bookshelf(x, y):
             R(x + lx, y + ly, 3, 3, GREEN, 3.4 + (lx % 2) * .8); R(x + lx + 1, y + ly + 2, 2, 1, GREEN, 2.4)
 
 
-def plant(x, y):
+def plant(x, y, extras=True):
     with prop(cast=None, rim=0):
         for sx, sh in ((11, 14), (6, 8), (16, 10)):
             R(x + sx, y - sh, 2, sh, GREEN, 2)
@@ -302,6 +309,8 @@ def plant(x, y):
             ins = 1 + i // 6
             R(x + ins, y + 4 + i, 24 - 2 * ins, 1, RED, 3.2 - (i in (4, 5, 10, 11)) * .8); R(x + 19 - ins, y + 4 + i, 5, 1, RED, 2.2); R(x + ins + 2, y + 4 + i, 2, 1, RED, 4)
         R(x + 1, y + 20, 22, 2, DESK, 3)
+    if not extras:
+        return
     with prop(cast=(1, 2)):                                      # a small pot beside it, a watering can
         R(x + 30, y + 12, 9, 8, PAPER, 4.4); R(x + 37, y + 12, 2, 8, PAPER, 3.4); E(x + 29, y + 5, 7, 6, GREEN, 3.8); E(x + 34, y + 4, 7, 7, GREEN, 3); E(x + 32, y + 8, 6, 5, GREEN, 4.2)
     with prop(cast=(2, 2)):
@@ -323,20 +332,26 @@ def fridge(x, y):
         R(x + 16, y, 6, 6, RED, 4); R(x + 16, y - 4, 6, 4, TEAL, 4); R(x + 20, y - 4, 2, 10, METAL, 2)
 
 
+def box(x, y, w, d, h, tone=0, label=None):
+    with prop(cast=(3, 4)):
+        R(x, y, w, d, CARD, 4.2 + tone); R(x, y + d, w, h, CARD, 3.2 + tone); R(x + w - 2, y + d, 2, h, CARD, 2.4 + tone)
+        R(x + 2, y + d + h - 3, 6, 1, CARD, 2.4 + tone)
+        R(x + w // 2 - 2, y, 4, d + 5, PAPER, 4.6); R(x, y + d // 2, w, 1, CARD, 3)               # tape
+        if label:
+            R(x + label, y + d + 3, 8, 6, PAPER, 5); R(x + label + 1, y + d + 5, 5, 1, PAPER, 3); R(x + label + 1, y + d + 7, 3, 1, RED, 4.5)
+
+
+def crate(x, y):
+    with prop(cast=(2, 3)):                                      # a crate of rolled paper
+        R(x, y + 8, 22, 6, DESK, 1.4); R(x, y + 14, 22, 14, DESK, 3.2); R(x, y + 18, 22, 1, DESK, 2); R(x, y + 23, 22, 1, DESK, 2)
+        for i, (m, l) in enumerate(((PAPER, 5), (PAPER, 4.4), (TEAL, 3.6), (PAPER, 5), (RED, 3.6))):
+            R(x + 2 + 4 * i, y + (i * 5) % 7, 3, 12 - (i * 5) % 7, m, l); R(x + 4 + 4 * i, y + (i * 5) % 7, 1, 12 - (i * 5) % 7, m, l - 1.2)
+
+
 def boxes():
-    def box(x, y, w, d, h, tone=0, label=None):
-        with prop(cast=(3, 4)):
-            R(x, y, w, d, CARD, 4.2 + tone); R(x, y + d, w, h, CARD, 3.2 + tone); R(x + w - 2, y + d, 2, h, CARD, 2.4 + tone)
-            R(x + 2, y + d + h - 3, 6, 1, CARD, 2.4 + tone)
-            R(x + w // 2 - 2, y, 4, d + 5, PAPER, 4.6); R(x, y + d // 2, w, 1, CARD, 3)               # tape
-            if label:
-                R(x + label, y + d + 3, 8, 6, PAPER, 5); R(x + label + 1, y + d + 5, 5, 1, PAPER, 3); R(x + label + 1, y + d + 7, 3, 1, RED, 4.5)
     box(18, 192, 30, 10, 22, 0, 3); box(21, 175, 22, 8, 13, .3, 12)                                    # bottom left corner
     box(306, 196, 28, 9, 20, -.2, 14)                                                                  # bottom right corner
-    with prop(cast=(2, 3)):                                      # a crate of rolled paper on it
-        R(308, 176, 22, 6, DESK, 1.4); R(308, 182, 22, 14, DESK, 3.2); R(308, 186, 22, 1, DESK, 2); R(308, 191, 22, 1, DESK, 2)
-        for i, (m, l) in enumerate(((PAPER, 5), (PAPER, 4.4), (TEAL, 3.6), (PAPER, 5), (RED, 3.6))):
-            R(310 + 4 * i, 168 + (i * 5) % 7, 3, 12 - (i * 5) % 7, m, l); R(312 + 4 * i, 168 + (i * 5) % 7, 1, 12 - (i * 5) % 7, m, l - 1.2)
+    crate(308, 168)                                                                                    # on it
 
 
 def pizza(x, y):
@@ -375,23 +390,34 @@ def rug(x, y, w, h):
     G([(x + w - 13, y + h - 1), (x + w, y + h - 1), (x + w, y + h - 12)], CARD, 3.4); L([(x + w - 13, y + h - 1), (x + w, y + h - 12)], RED, 1.6)     # a corner folded over
 
 
-def doormat(x, y):
+def shoe(sx, sy, m):
+    with prop(cast=(1, 2)):
+        R(sx, sy, 7, 11, m, 3.4 if m == RED else 2); R(sx + 1, sy + 2, 5, 5, m, 1.4); R(sx, sy + 9, 7, 2, PAPER, 4.6); R(sx + 5, sy, 2, 11, m, 2.4 if m == RED else 1.4)
+
+
+def skateboard(x, y):
+    with prop(cast=(2, 2)):
+        R(x, y + 3, 34, 8, DESK, 3.4); R(x + 2, y + 2, 30, 10, DESK, 3.4); R(x + 3, y + 4, 28, 6, METAL, 1.6); R(x + 12, y + 5, 6, 4, FLOOR, 5.5); R(x + 22, y + 6, 4, 3, TEAL, 4.5)
+        for wx in (x + 5, x + 26):
+            R(wx, y, 4, 2, PAPER, 4.6); R(wx, y + 12, 4, 2, PAPER, 4.6)
+
+
+def doormat(x, y, door=(160, 224), stuff=True):
+    """door: the left end of the door gap and the floor's bottom edge."""
+    dx, dy = door
     with prop(cast=(1, 1), rim=0):                               # coir, lighter than anything near it: it is a thing to press
         R(x, y, 28, 12, RED, 3.3); R(x + 2, y + 2, 24, 8, FLOOR, 4.3)
         for i in range(24):
             R(x + 2 + i, y + 2 + (i * 3) % 7, 1, 2, FLOOR, 3.5)
         for i in range(-3, 4):
             R(x + 14 + i, y + 3 + abs(i), 1, 7 - 2 * abs(i), RED, 3.6)
-    light(1 if EVE else .8, 2, [(160, 224), (192, 224), (200, 204), (152, 204)])                 # light from the corridor
+    light(1 if EVE else .8, 2, [(dx, dy), (dx + 32, dy), (dx + 40, dy - 20), (dx - 8, dy - 20)])  # light from the corridor
     if EVE:
-        light(.7, 4, [(156, 208), (196, 208), (214, 178), (146, 174)])
-    for sx, sy, m in ((132, 209, RED), (141, 211, RED), (196, 207, METAL), (205, 206, METAL)):          # shoes left at the door
-        with prop(cast=(1, 2)):
-            R(sx, sy, 7, 11, m, 3.4 if m == RED else 2); R(sx + 1, sy + 2, 5, 5, m, 1.4); R(sx, sy + 9, 7, 2, PAPER, 4.6); R(sx + 5, sy, 2, 11, m, 2.4 if m == RED else 1.4)
-    with prop(cast=(2, 2)):                                      # skateboard, along the wall
-        R(254, 213, 34, 8, DESK, 3.4); R(256, 212, 30, 10, DESK, 3.4); R(257, 214, 28, 6, METAL, 1.6); R(266, 215, 6, 4, FLOOR, 5.5); R(276, 216, 4, 3, TEAL, 4.5)
-        for wx in (259, 280):
-            R(wx, 210, 4, 2, PAPER, 4.6); R(wx, 222, 4, 2, PAPER, 4.6)
+        light(.7, 4, [(dx - 4, dy - 16), (dx + 36, dy - 16), (dx + 54, dy - 46), (dx - 14, dy - 50)])
+    if stuff:
+        for sx, sy, m in ((132, 209, RED), (141, 211, RED), (196, 207, METAL), (205, 206, METAL)):      # shoes left at the door
+            shoe(sx, sy, m)
+        skateboard(254, 210)                                    # along the wall
 
 
 def desk(x, y):
@@ -468,13 +494,17 @@ def desk(x, y):
             L(pts, METAL, .8)
 
 
+def power_strip(x, y):
+    with prop(cast=(1, 2)):
+        R(x, y, 18, 4, PAPER, 4.6); R(x, y + 4, 18, 2, PAPER, 3.2)
+        for i in range(4):
+            R(x + 2 + 4 * i, y + 1, 2, 2, METAL, 1)
+        R(x + 15, y + 1, 2, 2, RED + FLAT, 4)
+
+
 def floor_cables():
     """Cables keep to the wall and the desk: the floor between door, desk and shelf stays clear to walk on."""
-    with prop(cast=(1, 2)):                                      # power strip under the socket
-        R(108, 66, 18, 4, PAPER, 4.6); R(108, 70, 18, 2, PAPER, 3.2)
-        for i in range(4):
-            R(110 + 4 * i, 67, 2, 2, METAL, 1)
-        R(123, 67, 2, 2, RED + FLAT, 4)
+    power_strip(108, 66)                                        # under the socket
     for pts in ([(127, 54), (129, 60), (124, 66)], [(126, 69), (131, 74), (136, 72)], [(112, 68), (104, 73), (98, 66)],
                 [(108, 68), (96, 65), (86, 67), (52, 65), (42, 68), (36, 80), (20, 84), (18, 112)]):
         with prop(cast=(1, 1), rim=0):
@@ -492,7 +522,7 @@ def backpack(x, y):
         R(x + 6, y + 15, 5, 4, RED, 4.2); R(x - 1, y + 4, 2, 16, METAL, 1.6); R(x + 17, y + 4, 2, 16, METAL, 1.6)       # patch, straps
 
 
-def chair(x, y):
+def chair(x, y, hoodie=True):
     with prop(cast=(3, 3)):
         R(x + 12, y + 32, 4, 5, METAL, 2.6); R(x + 3, y + 37, 22, 3, METAL, 1.6)
         for wx in (1, 11, 22):
@@ -503,13 +533,15 @@ def chair(x, y):
         R(x + 1, y + 8, 26, 24, METAL, 2.8); R(x, y + 10, 28, 20, METAL, 2.8); R(x + 25, y + 11, 3, 16, METAL, 2); R(x, y + 27, 28, 3, METAL, 2)
         for sx in range(3, 26, 3):
             R(x + sx, y + 12, 1, 14, METAL, 2.3)
+    if not hoodie:
+        return
     with prop(cast=(2, 2)):                                      # a hoodie over the back
         G([(x - 2, y + 8), (x + 30, y + 8), (x + 31, y + 15), (x + 22, y + 14), (x + 12, y + 17), (x + 9, y + 28), (x - 3, y + 29)], RED, 3.2)
         R(x - 2, y + 8, 33, 2, RED, 4); L([(x + 3, y + 12), (x + 4, y + 27)], RED, 2.2); L([(x + 9, y + 11), (x + 8, y + 22)], RED, 2.2); L([(x + 20, y + 10), (x + 21, y + 13)], RED, 2.2)
         R(x + 13, y + 11, 1, 5, PAPER, 5); R(x + 16, y + 11, 1, 3, PAPER, 5)
 
 
-def bin_(x, y):
+def bin_(x, y, pile=True):
     with prop(cast=None):
         R(x + 2, y - 1, 5, 4, PAPER, 5); R(x + 5, y, 2, 3, PAPER, 3.6); R(x + 7, y - 3, 5, 5, PAPER, 4.6); R(x + 10, y - 2, 2, 4, PAPER, 3.4); R(x + 4, y - 5, 4, 4, FLOOR, 5)
     with prop(cast=(3, 4)):
@@ -520,10 +552,15 @@ def bin_(x, y):
     for px, py, m, l in ((18, 14, PAPER, 5), (-7, 17, PAPER, 4.6), (21, 22, FLOOR, 5), (12, 24, PAPER, 5)):
         with prop(cast=(1, 1)):
             R(x + px, y + py, 5, 4, m, l); R(x + px + 3, y + py + 1, 2, 3, m, l - 1.4); R(x + px + 1, y + py + 2, 1, 1, m, l - 1)
+    if pile:
+        book_pile(x + 66, y + 16)
+
+
+def book_pile(x, y):
     with prop(cast=(2, 3)):                                      # a pile of books that never made it to the shelf
         for i, (m, w) in enumerate(((GREEN, 20), (RED, 18), (PAPER, 19), (TEAL, 16), (CARD, 18))):
-            R(x + 66 + i % 2, y + 42 - 4 * i, w, 4, m, 3.2); R(x + 66 + i % 2, y + 45 - 4 * i, w, 1, m, 2)
-        R(x + 67, y + 19, 16, 7, CARD, 4.2); R(x + 69, y + 21, 6, 3, PAPER, 5); R(x + 77, y + 16, 6, 6, PAPER, 5); R(x + 78, y + 17, 4, 2, DESK, 1.4)
+            R(x + i % 2, y + 26 - 4 * i, w, 4, m, 3.2); R(x + i % 2, y + 29 - 4 * i, w, 1, m, 2)
+        R(x + 1, y + 3, 16, 7, CARD, 4.2); R(x + 3, y + 5, 6, 3, PAPER, 5); R(x + 11, y, 6, 6, PAPER, 5); R(x + 12, y + 1, 4, 2, DESK, 1.4)
 
 
 def dog_corner(x, y):

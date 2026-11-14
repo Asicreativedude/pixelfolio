@@ -144,6 +144,7 @@ export interface MapConfig {
   baseObjects?: Record<string, any>;
   light?: Record<string, number>;
   camera?: { x: number; y: number };
+  size?: [number, number];
   background?: string;
 }
 

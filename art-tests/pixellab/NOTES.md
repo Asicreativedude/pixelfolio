@@ -244,5 +244,14 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   - Engine changes are small and marked `#65 test`: a map can bring its own objects, a fixed camera, a background
     colour and a light table (`maps.ts`, `defineWorld.ts`, `worldMap.ts`, `sprite.ts`, `gameObject.ts`, `main.ts`,
     `progressTracker.ts`). The red wall outlines are hidden on test maps.
+- Larger room in the game (Asi: "Yes, larger room"): `/?map=Studio` and `/?map=StudioEvening`. A studio of 896x512 (28x16 tiles) in
+  the lived-in clutter style, drawn for the tile grid by `claude-drawn/directions/make_d06_studio.py` and exported by
+  `make_d06_game.py` (`game/studio-*.png`, `studio.json`, tile check in `game/studio-check.png`). It fills the 640x360 screen and
+  the camera follows the hero and stops at the room's edges. 240 of 338 floor tiles are free (71%), all reachable from the door.
+  45 colours over both rooms, day and evening. Walked in the preview by day and in the evening through seven stops with no
+  errors; frames in `game/in-game-studio-*.png`. Weak points: the evening floor away from the lamps is dark, busy two-tone noise;
+  the middle of the room is plain boards; the desk corner, plants and window view repeat the small room; the walk-behind layer
+  is only lamp shades and was not seen working in a frame; a figure standing right below another covers it with its head;
+  dialogue box still in the old style; no phone test.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.

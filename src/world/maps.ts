@@ -6,6 +6,7 @@ import type GameObject from '../objects/gameObject';
 import Person from '../objects/person';
 import { getPlayerData } from '../utils/progressTracker';
 import clutter from '../../art-tests/claude-drawn/game/clutter.json';
+import studio from '../../art-tests/claude-drawn/game/studio.json';
 
 type GameObjectConfig = {
   type: 'Person' | 'Collectable' | 'MapElement'; // Add other types as needed
@@ -234,11 +235,12 @@ export function createGameObjects(
 
 const hallWalls = extractWallsFromAsepriteJson(collisionJson);
 
-// ponytail: #65 test room (branch prototype/pixellab-test, never merge): the lived-in clutter still as a map.
-// Open /?map=Clutter or /?map=ClutterEvening. Assets: art-tests/claude-drawn/directions/make_d06_game.py.
+// ponytail: #65 test rooms (branch prototype/pixellab-test, never merge): lived-in clutter rooms as maps.
+// Open /?map=Clutter, /?map=ClutterEvening, /?map=Studio or /?map=StudioEvening.
+// Assets: art-tests/claude-drawn/directions/make_d06_game.py.
 const G = '/art-tests/claude-drawn/game/';
-// the tile (col, row) of the room image under a figure's feet
-const at = (col: number, row: number) => ({
+type Tile = [number, number]; // the tile (col, row) of the room image under a figure's feet
+const at = ([col, row]: Tile) => ({
   x: utils.withGrid(col + 1),
   y: utils.withGrid(row - 1),
 });
@@ -247,78 +249,105 @@ const stand = (direction: string, time: number) => ({
   direction,
   time,
 });
-const clutterObjects: Record<string, GameObjectConfig> = {
-  hero: {
-    type: 'Person',
-    isPlayerControlled: true,
-    ...at(5, 6),
-    direction: 'up',
-    src: G + 'hero.png',
-  },
-  dana: {
-    type: 'Person',
-    ...at(8, 4),
-    direction: 'up',
-    src: G + 'dana.png',
-    behaviorLoop: [stand('up', 2600), stand('left', 900), stand('up', 1800), stand('down', 700)],
-    talking: [
-      {
-        events: [
-          {
-            type: 'textMessage',
-            text: 'Half of these books are still in the boxes.',
-            faceHero: 'dana',
-          },
-        ],
-      },
-    ],
-  },
-  visitor: {
-    type: 'Person',
-    ...at(2, 4),
-    direction: 'right',
-    src: G + 'visitor.png',
-    behaviorLoop: [stand('right', 2200), stand('up', 1400), stand('down', 900)],
-    talking: [
-      {
-        events: [
-          {
-            type: 'textMessage',
-            text: 'Nice light in here in the morning.',
-            faceHero: 'visitor',
-          },
-        ],
-      },
-    ],
-  },
-  dog: {
-    type: 'Person',
-    ...at(6, 4),
-    src: G + 'dog.png',
-    behaviorLoop: [
-      stand('down', 1800),
-      { type: 'walk', direction: 'right' },
-      stand('right', 1400),
-      stand('down', 900),
-      { type: 'walk', direction: 'left' },
-      stand('left', 1200),
-    ],
-    talking: [{ events: [{ type: 'textMessage', text: 'Woof.' }] }],
-  },
+const say = (who: string, text: string) => [
+  { events: [{ type: 'textMessage', text, faceHero: who }] },
+];
+// the same four figures in every test room; the dog walks between two tiles side by side
+const cast = (spots: {
+  hero: Tile;
+  dana: Tile;
+  visitor: Tile;
+  dog: Tile[];
+}): Record<string, GameObjectConfig> => {
+  const [there, back] =
+    spots.dog[1][0] > spots.dog[0][0] ? ['right', 'left'] : ['left', 'right'];
+  return {
+    hero: {
+      type: 'Person',
+      isPlayerControlled: true,
+      ...at(spots.hero),
+      direction: 'up',
+      src: G + 'hero.png',
+    },
+    dana: {
+      type: 'Person',
+      ...at(spots.dana),
+      direction: 'up',
+      src: G + 'dana.png',
+      behaviorLoop: [
+        stand('up', 2600),
+        stand('left', 900),
+        stand('up', 1800),
+        stand('down', 700),
+      ],
+      talking: say('dana', 'Half of these books are still in the boxes.'),
+    },
+    visitor: {
+      type: 'Person',
+      ...at(spots.visitor),
+      direction: 'right',
+      src: G + 'visitor.png',
+      behaviorLoop: [
+        stand('right', 2200),
+        stand('up', 1400),
+        stand('down', 900),
+      ],
+      talking: say('visitor', 'Nice light in here in the morning.'),
+    },
+    dog: {
+      type: 'Person',
+      ...at(spots.dog[0]),
+      src: G + 'dog.png',
+      behaviorLoop: [
+        stand('down', 1800),
+        { type: 'walk', direction: there },
+        stand(there, 1400),
+        stand('down', 900),
+        { type: 'walk', direction: back },
+        stand(back, 1200),
+      ],
+      talking: say('dog', 'Woof.'),
+    },
+  };
 };
-const clutterWalls = Object.fromEntries(clutter.walls.map((k) => [k, true]));
-const clutterMap = (time: 'day' | 'evening') => ({
-  lowerSrc: `${G}clutter-${time}.png`,
-  baseObjects: clutterObjects,
-  walls: clutterWalls,
-  light: clutter.light[time],
-  // the room is smaller than the screen: keep it centred instead of following the hero
-  camera: { x: 160, y: 100 },
+const room = (
+  name: string,
+  data: { walls: string[]; light: Record<string, Record<string, number>> },
+  time: 'day' | 'evening',
+  extra: object
+) => ({
+  lowerSrc: `${G}${name}-${time}.png`,
+  walls: Object.fromEntries(data.walls.map((k) => [k, true])),
+  light: data.light[time],
   background: '#131c2b',
+  ...extra,
 });
+// smaller than the screen: the camera stays put and the room sits centred
+const clutterRoom = (time: 'day' | 'evening') =>
+  room('clutter', clutter, time, {
+    baseObjects: cast({
+      hero: [5, 6],
+      dana: [8, 4],
+      visitor: [2, 4],
+      dog: [
+        [6, 4],
+        [7, 4],
+      ],
+    }),
+    camera: { x: 160, y: 100 },
+  });
+// larger than the screen: the camera follows the hero (size), and upperSrc is what figures walk behind
+const studioRoom = (time: 'day' | 'evening') =>
+  room('studio', studio, time, {
+    baseObjects: cast(studio.spots as Parameters<typeof cast>[0]),
+    size: studio.size,
+    upperSrc: `${G}studio-upper-${time}.png`,
+  });
 export const worldMaps: any = {
-  Clutter: clutterMap('day'),
-  ClutterEvening: clutterMap('evening'),
+  Clutter: clutterRoom('day'),
+  ClutterEvening: clutterRoom('evening'),
+  Studio: studioRoom('day'),
+  StudioEvening: studioRoom('evening'),
   Hall: {
     lowerSrc: '../../Hall2.png',
     gameObjects: {

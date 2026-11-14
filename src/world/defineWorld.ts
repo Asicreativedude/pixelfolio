@@ -53,6 +53,15 @@ export default class World {
     if (this.map.camera) {
       this.cameraPerson = this.map.camera;
     }
+    // #65 test: in a room larger than the screen the camera follows the hero but stops at the room's edges
+    if (this.map.size) {
+      const [w, h] = this.map.size;
+      const { x, y } = this.map.gameObjects.hero;
+      this.cameraPerson = {
+        x: Math.min(Math.max(x, 304), w - 336),
+        y: Math.min(Math.max(y, 160), h - 200),
+      };
+    }
     this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.lowerImage);
     //Draw Game Objects
     Object.values(this.map.gameObjects as GameObject)
