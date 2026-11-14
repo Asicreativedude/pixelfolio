@@ -131,5 +131,15 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
     on one plane of one object; a dark cool room lit by a teal screen and an orange lamp. About 40 minutes,
     5 rounds. Weak: a stiff blocky figure, fork-like fingers, ragged light pools.
   Both are vector or painted stills, not pixel art, and not game assets yet (no walk frames, no tiles).
+- Asi on the painted still: "Can we somehow get the painted light style into our pixel art world?" Two ways,
+  both from `make_painted_light.py`:
+  - `painted-light-pixels.png`: the pixel room and pixel cast exactly as drawn, with only the light repainted by
+    the painting's recipe (dark cool ambient, a teal screen and an orange lamp, four flat light levels with a
+    wandering edge, each figure's shadow filled by the other light). Left as drawn, right in painted light.
+    64 colours, not ENDESGA 32.
+  - `painted-baked-pixels.png`: the painting itself shrunk to 640×360 (left) and 320×180 (right), 64 colours.
+    It keeps the look, but the man is about 180 px tall at 640×360 against the game's 50 px hero, so it is a
+    close-up. At the game's real scale most painted detail would be gone and mainly the light would remain.
+  About 30 minutes. Neither runs in the game: the light is baked into a picture by the script.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
