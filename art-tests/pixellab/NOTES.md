@@ -122,5 +122,14 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   colour each. Source: `anidoodle/officeIso.ts` (needs the anidoodle engine to render; 1920×1080, vector, not
   pixel art, not ENDESGA 32). About 45 minutes. Known flaws: hands are mittens, the man stands stiff and
   symmetrical, the dog reads close to a fox.
+- Asi: "Maybe use anidoodle for the other drawings as well". Two more stills of the same office, each drawn with
+  anidoodle in a three-quarter top-down view (the game's own view), 1920×1080:
+  - `office-line.png` (`anidoodle/officeLine.ts`): line and flat colour, built on the marker-comic plate. One pen
+    weight, flat fills, one shadow tone, ten colours on cream, #F54E00 as the accent. About 25 minutes, 5 rounds.
+    Weak: stiff legs, plain box furniture, a static layout.
+  - `office-painted.png` (`anidoodle/officePaint.ts`): painted light, built on the oil-paint plate. Strokes stay
+    on one plane of one object; a dark cool room lit by a teal screen and an orange lamp. About 40 minutes,
+    5 rounds. Weak: a stiff blocky figure, fork-like fingers, ragged light pools.
+  Both are vector or painted stills, not pixel art, and not game assets yet (no walk frames, no tiles).
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
