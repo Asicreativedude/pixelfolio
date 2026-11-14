@@ -173,7 +173,8 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
   },
   // ponytail: #61 PixelLab test only (branch prototype/pixellab-test, never merge).
   // Left to right: current hero, PixelLab from Asi's hero (64 px 1:1), PixelLab text 32 px drawn 2x,
-  // PixelLab text 64 px drawn 1:1, drawn by Claude on the hero template (art-tests/claude-drawn).
+  // PixelLab text 64 px drawn 1:1, drawn by Claude on the hero's body,
+  // Saruli, drawn by Claude on Saruli's body (art-tests/claude-drawn).
   ...Object.fromEntries(
     [
       ['testHero', 7, '../../Hero/Sprite-Hero.png'],
@@ -181,6 +182,8 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
       ['testPx32', 13, '/art-tests/pixellab/sheet-32x2.png'],
       ['testPx64', 16, '/art-tests/pixellab/sheet-64.png'],
       ['testClaude', 19, '/art-tests/claude-drawn/visitor.png'],
+      ['testSaruli', 22, '../../characters/saruli.png'],
+      ['testClaudeF', 25, '/art-tests/claude-drawn/dana.png'],
     ].map(([id, col, src]) => [
       id,
       {

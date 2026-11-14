@@ -1,7 +1,8 @@
-# Draws a new NPC by code on the hero's body template (#61 side test: "can Claude just build the px chars?").
-# Body, poses and walk frames come from public/Hero/Sprite-Hero.png (read only): recoloured to ENDESGA 32,
-# short sleeves turned into long ones. The head is drawn here, pixel by pixel, for front, side and back,
-# and stamped at each frame's head offset. Left = right mirrored.
+# Draws new NPCs by code on an existing character's body (#61 side test: "can Claude just build the px chars?").
+# Body, poses and walk frames come from a cast sheet (read only), recoloured to ENDESGA 32. The head is drawn
+# here, pixel by pixel, for front, side and back, and stamped at each frame's head offset. Left = right mirrored.
+#   visitor: the hero's body, short sleeves made long.
+#   dana: Saruli's body (dress), long straight hair instead of curls.
 #
 # usage (repo root): python3 -I art-tests/claude-drawn/make_char.py
 # Rows are run-length: "6. # 4H 2L" = 6 clear, 1 outline, 4 hair, 2 hair light. "_" keeps the template pixel.
@@ -10,12 +11,15 @@ from PIL import Image, ImageOps
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 E32 = set(open(os.path.join(HERE, '../pixellab/e32.hex')).read().split())
+# letter -> colour. T/t = top or dress, d = trousers, c = shoes, B = iris, M = mouth.
 PAL = {'#': '181425', 'H': 'f77622', 'h': 'be4a2f', 'L': 'feae34', 's': 'e8b796', 'k': 'c28569',
        'e': '3e2731', 'W': 'ffffff', 'M': 'b86f50', 'T': '3e8948', 't': '265c42', 'd': '3a4466'}
-assert set(PAL.values()) <= E32
-# hero colour -> role. Leftover beard/hair pixels below the neck become shirt shade.
-ROLE = {'000000': '#', '150908': '#', '513407': '#', '191919': 'd', '121212': 'd', 'ebbf96': 's',
-        'cba582': 'k', '0989a0': 'T', '076a7c': 't', '6c6c6c': 't', '4c4c4c': 't', '373737': 't', 'ffffff': 't'}
+# template colour -> letter. Colours not listed (old hair, earrings) are dropped.
+HERO_ROLE = {'000000': '#', '150908': '#', '513407': '#', '191919': 'd', '121212': 'd', 'ebbf96': 's',
+             'cba582': 'k', '0989a0': 'T', '076a7c': 't', '6c6c6c': 't', '4c4c4c': 't', '373737': 't',
+             'ffffff': 't'}
+SARULI_ROLE = {'000000': '#', 'e3ab7e': 's', 'edb384': 's', 'b18562': 'k', '3a4d8a': 'T', '27325b': 't',
+               'a83e3e': 'c'}
 
 FRONT = {13: '10. 11#', 14: '8. 3# 2H 3L 5H 3#', 15: '7. 2# 3H 3L 7H h 2#', 16: '6. # 4H 2L 9H 2h #',
          17: '6. # 15H 2h #', 18: '6. # 16H h #', 19: '6. # H h 6k 2h 6H h #', 20: '6. # H k 7s k 2h 4H h #',
@@ -35,25 +39,62 @@ BACK = {16: '10. 11#', 17: '8. 3# 4H 3L 3H 3#', 18: '7. 2# 6H 3L 4H h 2#', 19: '
         28: '4. # 2s h 14H 2h 2s #', 29: '5. # s 2h 13H 2h s #', 30: '6. 2# 2h 11H 2h 2#',
         31: '7. # 3h 9H 3h #', 32: '7. # 4h 7H 4h #', 33: '8. # 13h #', 34: '11_ 9#', 35: '11_ 2# 5t 2#',
         36: '13_ 5t'}
-# sheet row -> (stamp, last template row that is all head, head offset per column idle/walk-a/walk-b)
-VIEWS = {0: (FRONT, 30, [(0, 0), (0, 0), (-2, 0)]),
-         2: (SIDE, 34, [(0, 0), (-1, 1), (-3, 0)]),
-         3: (BACK, 33, [(0, 0), (-1, 0), (-2, 0)])}
-MIRROR_AXIS = [31, 28, 24]  # where the hero's own left frames sit relative to his right frames
+
+D_FRONT = {16: '10. 11#', 17: '8. 3# 3H 3L 4H 3#', 18: '7. 2# 4H 3L 6H h 2#', 19: '6. # 16H h #',
+           20: '5. # 18H h #', 21: '5. # 9H h 8H h #', 22: '5. # 7H h k s k h 6H h #',
+           23: '5. # 5H h k 5s k h 4H h #', 24: '5. # 3H h k 9s k h 2H h #',
+           25: '5. # H h 2s 4# 3s 4# 2s h H #', 26: '5. # H h 3s B W 5s B W 3s h H #',
+           27: '5. # H h 3s 2B 5s 2B 3s h H #', 28: '5. # H h 15s h H #', 29: '5. # H h 15s h H #',
+           30: '5. # H 2h 13s 2h H #', 31: '5. # H 2h 5s 3M 5s 2h H #', 32: '5. # 2H 2h k 9s k 2h 2H #',
+           33: '5. # 2H 3h k 7s k 3h 2H #', 34: '5. # 3H 3# 3s k 3s 3# 3H #', 35: '5. # 3H 13_ 3H #',
+           36: '5. # 2H h 13_ h 2H #', 37: '5. # H 2h 13_ 2h H #', 38: '6. 3# 13_ 3#'}
+D_SIDE = {18: '11. 9#', 19: '9. 3# 3H 3L 2H 3#', 20: '7. 3# 4H 3L 5H h 2#', 21: '6. 2# 16H h #',
+          22: '6. # 17H h #', 23: '6. # h 15H 2h #', 24: '6. # h 12H 2h k s #', 25: '6. # h 9H 2h k 4s #',
+          26: '6. # h 7H 2h k 6s #', 27: '6. # h 6H 2h k s 3# 2s 2#', 28: '6. # h 5H 2h k 2s W B 4s #',
+          29: '6. # h 5H 2h k 2s 2B 3s #', 30: '6. # h 5H 2h k 7s #', 31: '6. # h 5H 2h k 7s #',
+          32: '6. # h 5H 2h k 7s #', 33: '6. # h 5H 2h k 7s #', 34: '6. # h 5H 2h k 3s 3M s #',
+          35: '6. # h 5H 2h k 6s #', 36: '6. # h 5H 2h # 4s 2#', 37: '6. # h 4H h 2k 5#',
+          38: '6. # h 3H h', 39: '7. # h 2H h', 40: '7. # h 2H h', 41: '8. 4#'}
+D_BACK = {15: '10. 11#', 16: '8. 3# 3H 3L 4H 3#', 17: '7. 2# 5H 3L 5H h 2#', 18: '6. # 16H h #',
+          19: '5. # 18H h #',
+          **{y: '5. # h 7H L h 8H h #' for y in range(20, 24)},
+          **{y: '5. # h 8H h 3H h 4H h #' for y in range(24, 26)},
+          **{y: '5. # h 4H h 3H h 3H h 4H h #' for y in range(26, 34)},
+          34: '6. # h 3H h 3H h 3H h 3H h #', 35: '7. # h 2H h 3H h 3H h 2H h #',
+          36: '8. # h H h 3H h 3H h H h #', 37: '8. # 3h 3H h 3H 3h #', 38: '9. # 11h #', 39: '10. 11#'}
+
+# views: sheet row -> (stamp, last template row that is all head, head offset per column idle/walk-a/walk-b)
+# mirror: where the template's own left frames sit relative to its right frames, per column
+CHARS = {
+    'visitor': dict(sheet='public/Hero/Sprite-Hero.png', role=HERO_ROLE, pal={}, long_sleeves=True,
+                    views={0: (FRONT, 30, [(0, 0), (0, 0), (-2, 0)]),
+                           2: (SIDE, 34, [(0, 0), (-1, 1), (-3, 0)]),
+                           3: (BACK, 33, [(0, 0), (-1, 0), (-2, 0)])},
+                    mirror=[31, 28, 24]),
+    'dana': dict(sheet='public/characters/saruli.png', role=SARULI_ROLE, long_sleeves=False,
+                 pal={'H': 'feae34', 'h': 'd77643', 'L': 'fee761', 'T': 'e43b44', 't': 'a22633',
+                      'c': '3a4466', 'B': '124e89', 'M': 'a22633'},
+                 views={0: (D_FRONT, 34, [(0, 0), (-1, 1), (-3, 0)]),
+                        2: (D_SIDE, 37, [(0, 0), (-1, 0), (-4, 0)]),
+                        3: (D_BACK, 34, [(0, 0), (-1, 1), (-3, 0)])},
+                    mirror=[30, 25, 23]),
+}
 
 def rle(s):
     return ''.join(t[-1] * int(t[:-1] or 1) for t in s.split())
 
-hero = Image.open(os.path.join(HERE, '../../public/Hero/Sprite-Hero.png')).convert('RGBA')
-
-def frame(r, c):
-    stamp, head_end, offs = VIEWS[r]
+def frame(cfg, pal, tpl, r, c):
+    stamp, head_end, offs = cfg['views'][r]
     dx, dy = offs[c]
-    src = hero.crop((c * 64, r * 64, c * 64 + 64, r * 64 + 64)).load()
-    g = {(x, y): ROLE['%02x%02x%02x' % src[x, y][:3]]
-         for y in range(head_end + dy + 1, 64) for x in range(64) if src[x, y][3]}
+    src = tpl.crop((c * 64, r * 64, c * 64 + 64, r * 64 + 64)).load()
+    g = {}
+    for y in range(head_end + dy + 1, 64):
+        for x in range(40):  # art sits in the left of the frame; Saruli's sheet has stray pixels at x=63
+            v = src[x, y][3] and cfg['role'].get('%02x%02x%02x' % src[x, y][:3])
+            if v:
+                g[x, y] = v
     # long sleeves: each arm is one blob of skin; its bottom 4 rows stay a hand
-    skin = {p for p, v in g.items() if v in 'sk'}
+    skin = {p for p, v in g.items() if v in 'sk'} if cfg['long_sleeves'] else set()
     while skin:
         arm, todo = set(), [next(iter(skin))]
         while todo:
@@ -73,19 +114,23 @@ def frame(r, c):
                 g[x + dx, y + dy] = ch
     out = Image.new('RGBA', (64, 64))
     for p, v in g.items():
-        out.putpixel(p, tuple(bytes.fromhex(PAL[v])) + (255,))
+        if 0 <= p[0] < 64 and 0 <= p[1] < 64:
+            out.putpixel(p, tuple(bytes.fromhex(pal[v])) + (255,))
     return out
 
-sheet = Image.new('RGBA', (256, 256))
-for r in VIEWS:
-    for c in range(3):
-        f = frame(r, c)
-        sheet.paste(f, (c * 64, r * 64))
-        if r == 2:  # left row
-            m = Image.new('RGBA', (64, 64))
-            m.paste(ImageOps.mirror(f), (MIRROR_AXIS[c] - 63, 0))
-            sheet.paste(m, (c * 64, 64))
-used = {'%02x%02x%02x' % p[:3] for _, p in sheet.getcolors() if p[3]}
-assert used <= E32, used - E32  # the one check: every pixel is ENDESGA 32
-sheet.save(os.path.join(HERE, 'visitor.png'))
-print('visitor.png', len(used), 'colours, all ENDESGA 32')
+for name, cfg in CHARS.items():
+    pal = {**PAL, **cfg['pal']}
+    tpl = Image.open(os.path.join(HERE, '../..', cfg['sheet'])).convert('RGBA')
+    sheet = Image.new('RGBA', (256, 256))
+    for r in cfg['views']:
+        for c in range(3):
+            f = frame(cfg, pal, tpl, r, c)
+            sheet.paste(f, (c * 64, r * 64))
+            if r == 2:  # left row
+                m = Image.new('RGBA', (64, 64))
+                m.paste(ImageOps.mirror(f), (cfg['mirror'][c] - 63, 0))
+                sheet.paste(m, (c * 64, 64))
+    used = {'%02x%02x%02x' % p[:3] for _, p in sheet.getcolors() if p[3]}
+    assert used <= E32, used - E32  # the one check: every pixel is ENDESGA 32
+    sheet.save(os.path.join(HERE, name + '.png'))
+    print(name + '.png', len(used), 'colours, all ENDESGA 32')

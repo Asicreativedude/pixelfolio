@@ -69,7 +69,11 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   About 15 minutes for the first character; a second one on the same template is a new head and a colour table.
 - `to_aseprite.lua` runs in Aseprite's batch mode and turns a sheet into `visitor.aseprite`: 12 frames, tags
   down/left/right/up, indexed in ENDESGA 32. Aseprite runs headless only; Claude doesn't drive its window.
-- `lineup-hall.png`: hero, Claude-drawn, PixelLab-from-reference (A3) on the Hall at 3×. Rows: idle down, walk
-  right, idle up, idle left. In game it's the fifth test NPC (column 19).
-- Limits: it reuses the hero's body, so every character has his build and walk. A different body (Saruli's dress,
-  the alien) means drawing that body once by hand or by code.
+- `lineup-hall.png`: Saruli, Dana, hero, visitor on the Hall at 3×. Rows: idle down, walk
+  right, idle up, idle left. In game the visitor is the fifth test NPC (column 19).
+- Second test, a woman "like Saruli": `dana.png` / `dana.aseprite`. Saruli's body and walk (dress recoloured red),
+  with a new head drawn in the script: long straight blonde hair instead of curls, blue eyes. 11 colours, all
+  ENDESGA 32. About 20 minutes, most of it reading Saruli's frames, because her frames sit at different offsets
+  from the hero's. In game: Saruli at column 22, Dana at column 25.
+- Limits: it reuses an existing body, so a character gets the hero's or Saruli's build and walk. A new body
+  (a child, the alien, a coat) means drawing that body once by hand or by code.
