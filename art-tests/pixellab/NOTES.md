@@ -141,5 +141,15 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
     It keeps the look, but the man is about 180 px tall at 640×360 against the game's 50 px hero, so it is a
     close-up. At the game's real scale most painted detail would be gone and mainly the light would remain.
   About 30 minutes. Neither runs in the game: the light is baked into a picture by the script.
+- Asi on the first painted-light pixels: "Nice it looks a bit forced. And works in this specific scene though.
+  Also lights and shadow don't seem pixelated at all." Second version of `make_painted_light.py` (it replaces
+  `painted-light-pixels.png`; `painted-baked-pixels.png` is from the first version and is no longer generated):
+  - Pixelated: a light is three flat steps, each ending on a clean edge with a two-pixel checker band. No noise.
+    A figure's shadow is its own sprite laid on the floor away from the light. `painted-light-zoom.png` is a 6×
+    crop to check this.
+  - Less forced: the dusk is calmer, and the same office is shown by day and at night from other settings.
+  - Another scene: the same code lights a crop of the existing Hall (lamp over the lounge, daylight from the door).
+  - Open: lit colours are not palette-locked (51 colours by day, 358 at dusk). Warm light on the Hall's blue
+    floor turns grey. Furniture casts no shadow from the new lights, only figures do. About 30 minutes.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
