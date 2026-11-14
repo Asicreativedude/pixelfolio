@@ -172,5 +172,40 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
     night; other light colours would need the fit run again.
   - Open: still a picture made by a script, not light in the game. The Hall's art is not ENDESGA 32, so its
     unlit colours are snapped too. Heights are guesses. About 50 minutes.
+- Asi on the ten researched directions: "lets preview a still image of each one cause from text I cant
+  understand really how it looks". Done: `art-tests/claude-drawn/directions/`, one script and one 1056x720 still
+  per direction, the same office corner each time, and `directions.png` with all ten labelled. Nine were drawn
+  by three helper agents (17 to 23 minutes each for three stills); number 5 comes from the light work.
+  What each still is, honestly:
+  - 1 Muted world, loud clickables: 13 colours. `make_room.py`'s drawings recoloured, so it sits close to the
+    current art; teal only on the hero, screen, notes, mat and the dog's bandana.
+  - 2 Naive flat cartoon: 19 colours, room and cast redrawn. Wobble is a seeded 1 px wave, not a hand.
+  - 3 Neon flat minimalism: 20 colours plus smooth glows. Figures are stiff and the hero's likeness is weak.
+  - 4 One-bit plus one accent: 3 colours, all redrawn. Faces are crude icons; the hero's grey sides cannot exist.
+  - 5 Lamp-lit dusk: the soft-light dusk office from `make_light_two_ways.py` (see below). The report's rule
+    sheet asked for stepped rings; the light research says not to, so the still does not follow that rule.
+  - 6 Lived-in clutter: 44 colours, about fifty new props, light drawn into the room as irregular patches.
+    Busy; some small props are hard to read; the cast is not lit.
+  - 7 Soft diorama: 32 low-saturation colours, room redrawn. Close to the cosy farming-game look.
+  - 8 Desktop chrome: 23 colours. The frame is new; the room inside is still the old drawing, flattened.
+  - 9 Portrait-led PC-98: 16 colours, native 528x360. The portrait is geometric, not hand-drawn quality.
+  - 10 Paper cut-out: 16 colours (8 fills and their shadows). Leans towards flat tech illustration.
+- Asi on the third light version: "i think we should research a bit how pixel art games deal with lights.
+  something feels off and im not sure what". Research: `research_notes/Pixel art lighting/games.md` and
+  `craft.md` (claims marked sourced or inference; several pages were blocked). What our light did that no
+  documented game does: static rings of light (banding; the one game that had them, Dank Tomb, called them
+  artificial), dither on the rings, one dark blue multiplied over everything, sprite-shaped shadows (Graveyard
+  Keeper tried skewed ones and dropped them), colours snapped to a palette after blending, and no response to
+  where the lamp is. What games do: smooth light at screen resolution over the pixel art (Stardew Valley,
+  Graveyard Keeper, Celeste), night as a per-colour table or grade, lit areas back in the art's own colours,
+  blob or stock shadows, and rim light or painted normal maps when light should show form (Animal Well,
+  Eastward, Dead Cells). Moonlighter has no computed light at all: night is hand-made sprites.
+- `make_light_two_ways.py` applies that: `light-two-ways.png` shows the dusk office and the Hall with soft
+  light (left) and with light kept on the pixel grid (right: one hard-edged shape per light, a rim on the lamp
+  side of characters). Both use a table (each drawn colour has one dusk colour and one colour per light) and
+  blob shadows. My read: the soft one looks right; the hard-edged one reads as a spotlight painted on the
+  floor. The pixel one uses 226 colours for 91 drawn colours in 6 states, so a fixed palette is possible there
+  but large. This contradicts the earlier aim of pixel-stepped light ("lights and shadow don't seem pixelated
+  at all" was said about the noisy first version). Waiting for Asi's reaction.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.

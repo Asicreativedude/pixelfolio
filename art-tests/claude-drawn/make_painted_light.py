@@ -15,7 +15,8 @@
 # Light is still three flat steps with a checker band at each edge, and characters still lay their sprite down.
 # Writes painted-light-pixels.png (office by day, at dusk, at night; the Hall as drawn and lit),
 # painted-light-zoom.png (6x crop), painted-light-palettes.png (the dusk office held to ENDESGA 32, ENDESGA 64
-# and the fitted palette, then in free colours) and directions/d05-lamp-lit-dusk.png.
+# and the fitted palette, then in free colours).
+# Superseded by make_light_two_ways.py after the research on how games do light; kept for the palette test.
 # usage (repo root): python3 -I art-tests/claude-drawn/make_painted_light.py
 import math, os, sys
 from PIL import Image, ImageChops
@@ -381,6 +382,4 @@ for i, im in enumerate((hall_before.convert('RGB'), hall_lit)):
     sheet.paste(im.resize((HW * 2, HH * 2), Image.NEAREST), (i * (HW * 2 + 8), RH * 2 + 8))
 sheet.save(os.path.join(m.HERE, 'painted-light-pixels.png'))
 rooms['dusk'].crop((150, 100, 310, 200)).resize((960, 600), Image.NEAREST).save(os.path.join(m.HERE, 'painted-light-zoom.png'))
-os.makedirs(os.path.join(m.HERE, 'directions'), exist_ok=True)
-rooms['dusk'].resize((RW * 3, RH * 3), Image.NEAREST).save(os.path.join(m.HERE, 'directions/d05-lamp-lit-dusk.png'))
 print('main sheet held to', MAIN, '-', len(used), 'of 64 colours used over all five pictures')
