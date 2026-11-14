@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- PROTOTYPE (wayfinder #60, branch prototype/style-lock): throwaway, never merge. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Style lock comparison</title>
+<style>
+  :root { --z: 2; }
+  body { margin: 0; padding: 16px; background: #14161c; color: #d8dce6; font: 14px/1.5 system-ui, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p, li { max-width: 72ch; }
+  .bar { position: sticky; top: 0; z-index: 2; background: #14161c; padding: 8px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button { background: #262b38; color: inherit; border: 1px solid #3a4152; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  button[aria-pressed="true"] { background: #fe5f9a; color: #14161c; border-color: #fe5f9a; }
+  section { margin: 24px 0 32px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h2 small { font-weight: normal; color: #8b93a7; }
+  .sw { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 0 8px; max-width: 760px; }
+  .sw i { width: 14px; height: 14px; display: block; }
+  .scroll { overflow-x: auto; }
+  .scene { position: relative; width: calc(736px * var(--z)); height: calc(288px * var(--z)); }
+  .scene img, .solo img { image-rendering: pixelated; display: block; }
+  .scene > img { width: 100%; height: 100%; }
+  .actor { position: absolute; }
+  .actor img { width: calc(64px * var(--z)); height: calc(64px * var(--z)); }
+  .actor span { position: absolute; top: -18px; left: 0; white-space: nowrap; font-size: 11px; background: #14161ccc; padding: 0 4px; border-radius: 3px; }
+  .note { color: #b8bfcf; font-size: 13px; margin: 6px 0 0; }
+</style>
+</head>
+<body>
+<h1>Pixelfolio style lock: palette × character density</h1>
+<p>A strip cut from the Hall plus Chich's idle frame, remapped into each candidate palette by the Aseprite CLI (nearest colour, no dithering), and drawn <b>at game scale</b>: 1 map pixel = 2 game px.
+In each scene, the <b>left</b> Chich is today's 64 px frame drawn 1:1, so his pixels are half the map's size. The <b>right</b> one is a 32 px frame drawn at 2×, so his pixels match the map.
+The 32 px Chich is a <b>mechanical half-size</b> of the 64 px art, not a redraw. Judge the pixel size, not his face. A real 32 px redraw would read better.</p>
+<div class="bar">Zoom (CSS px per game px):
+  <button data-z="1">1×</button><button data-z="2" aria-pressed="true">2×</button><button data-z="3">3×</button><button data-z="4">4×</button>
+</div>
+
+<main id="rows"></main>
+
+<h2>What I see (react to the pictures, not this)</h2>
+<ul>
+  <li><b>Hall 41</b> has no white and one lone peach (<code>#ffdba2</code>) for skin, so every character remapped into it goes sickly green. It can't be the lock on its own.</li>
+  <li><b>ENDESGA 32</b>, mechanically remapped, merges the floor's two checker blues into one and turns the grout dark green. The carpet goes crimson, the grey wall goes blue, and Chich comes through almost unchanged. A real E32 Hall would need hand-picked ramps (<code>#3a4466</code> / <code>#5a6988</code> / <code>#8b9bb4</code>) for the floor, not a blind remap.</li>
+  <li><b>As-is, locked</b> (third option): the union of every colour the Hall and the four characters already use, 84 in all. Existing art passes untouched (the build checks that), and PixelLab <i>Force colors</i> and Retro Diffusion <code>input_palette</code> both take it. The cost is that it's an accident of history, not a designed ramp set, and 84 is loose for keeping AI output on-model.</li>
+  <li><b>Density:</b> at 2× zoom the left Chich's half-size pixels stand out against the floor tiles. The right one sits in the same pixel grid as the room.</li>
+</ul>
+<p class="note">Built by <code>python3 -I prototypes/style-lock/build.py</code> from copies; no <code>.aseprite</code> source was touched.</p>
+
+<script src="out/palettes.js"></script>
+<script>
+  const ROWS = [
+    ['asis', 'As-is, locked', 'the Hall + all four characters, untouched'],
+    ['hall41', 'Hall 41', "the Hall's own colours"],
+    ['e32', 'ENDESGA 32', 'Lospec; 26 of its colours already in pixelfolio.aseprite'],
+  ];
+  document.getElementById('rows').innerHTML = ROWS.map(([id, name, sub]) => `
+    <section>
+      <h2>${name} <small>· ${PALETTES[id].length} colours · ${sub}</small></h2>
+      <div class="sw">${PALETTES[id].map(h => `<i style="background:#${h}" title="#${h}"></i>`).join('')}</div>
+      <div class="scroll"><div class="scene">
+        <img src="out/${id}-scene.png" alt="${name}: Hall strip">
+        <div class="actor" style="left:calc(276px*var(--z));top:calc(140px*var(--z))"><span>64 px @ 1:1 (today)</span><img src="out/${id}-char64.png" alt=""></div>
+        <div class="actor" style="left:calc(356px*var(--z));top:calc(140px*var(--z))"><span>32 px @ 2×</span><img src="out/${id}-char32.png" alt=""></div>
+      </div></div>
+    </section>`).join('');
+  document.querySelectorAll('[data-z]').forEach(b => b.onclick = () => {
+    document.documentElement.style.setProperty('--z', b.dataset.z);
+    document.querySelectorAll('[data-z]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  });
+</script>
+</body>
+</html>
