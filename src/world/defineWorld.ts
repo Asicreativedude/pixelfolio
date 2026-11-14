@@ -149,6 +149,7 @@ export default class World {
 
   init(): void {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    (window as any).__world = this; // PROTOTYPE (#52): mobile controls hook
     this.startMap(worldMaps.Hall);
 
     this.directionInput = new DirectionInput();
@@ -167,6 +168,7 @@ export default class World {
     });
   }
   destroy() {
+    if ((window as any).__world === this) (window as any).__world = null; // PROTOTYPE (#52)
     this.map = null;
     this.cameraPerson = null;
     this.isGameRunning = false;

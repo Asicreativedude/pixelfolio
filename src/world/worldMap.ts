@@ -46,8 +46,9 @@ export default class WorldMap {
     let scaledOffsetX, scaledOffsetY;
 
     if (cameraPerson) {
-      scaledOffsetX = utils.withGrid(9.5) - cameraPerson.x;
-      scaledOffsetY = utils.withGrid(5) - cameraPerson.y;
+      // PROTOTYPE (#52): camera centre from canvas size (same as Sprite.draw) so a taller canvas works
+      scaledOffsetX = ctx.canvas.width / 2 - 16 - cameraPerson.x;
+      scaledOffsetY = ctx.canvas.height / 2 - 20 - cameraPerson.y;
     } else {
       scaledOffsetX = utils.withGrid(0);
       scaledOffsetY = utils.withGrid(0);
@@ -189,10 +190,10 @@ export default class WorldMap {
     Object.keys(this.walls).forEach((key) => {
       const [x, y] = key.split(',').map(Number);
       const scaledOffsetX = Math.floor(
-        x - cameraPerson.x + utils.withGrid(9.5) - 32
+        x - cameraPerson.x + ctx.canvas.width / 2 - 16 - 32
       );
       const scaledOffsetY =
-        Math.floor(y - cameraPerson.y + utils.withGrid(5)) + 32;
+        Math.floor(y - cameraPerson.y + ctx.canvas.height / 2 - 20) + 32;
       ctx.strokeStyle = 'red';
       ctx.strokeRect(
         scaledOffsetX,
