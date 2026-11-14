@@ -171,6 +171,37 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
     frameHeight: 200,
     zIndexOffset: -128,
   },
+  // ponytail: #61 PixelLab test only (branch prototype/pixellab-test, never merge).
+  // Left to right: current hero, PixelLab from Asi's hero (64 px 1:1), PixelLab text 32 px drawn 2x,
+  // PixelLab text 64 px drawn 1:1.
+  ...Object.fromEntries(
+    [
+      ['testHero', 7, '../../Hero/Sprite-Hero.png'],
+      ['testPxRef', 10, '/art-tests/pixellab/sheet-ref.png'],
+      ['testPx32', 13, '/art-tests/pixellab/sheet-32x2.png'],
+      ['testPx64', 16, '/art-tests/pixellab/sheet-64.png'],
+    ].map(([id, col, src]) => [
+      id,
+      {
+        type: 'Person',
+        useShadow: true,
+        isPlayerControlled: false,
+        x: utils.withGrid(col as number),
+        y: utils.withGrid(8),
+        src,
+        behaviorLoop: [
+          { type: 'stand', direction: 'down', time: 2000 },
+          { type: 'walk', direction: 'down' },
+          { type: 'walk', direction: 'right' },
+          { type: 'stand', direction: 'right', time: 600 },
+          { type: 'walk', direction: 'up' },
+          { type: 'stand', direction: 'up', time: 600 },
+          { type: 'walk', direction: 'left' },
+          { type: 'stand', direction: 'left', time: 600 },
+        ],
+      },
+    ])
+  ),
 };
 
 export function createGameObjects(
