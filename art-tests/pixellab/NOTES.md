@@ -104,5 +104,9 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   - About 35 minutes for all three, plus 15 for the v2 props and 30 for v3. Everything is 100% ENDESGA 32.
   - Open points it shows: ENDESGA 32 has one mid slate blue, so the Hall's soft two-tone checker floor can't be
     kept; the room marks tile corners instead. The room isn't wired into the game (no walls, no map entry).
+- Asi on the detailed version: "It's nice. Everything feels a bit like 2012 freepik pixel art. We miss some
+  style no?" First probe: `make_styles.py` → `styles.png`, the same room four ways (as drawn; dusk with the lamp
+  and screen as the only light; slate world with warm accents; toned outlines instead of one dark ink). These
+  change palette, light and outline only. Shapes, proportions and what is in the room are the same drawing.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.

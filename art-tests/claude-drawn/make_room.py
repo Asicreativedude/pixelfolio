@@ -31,6 +31,13 @@ def rgb(c):
 
 
 DARK_RGB = {rgb(k): rgb(v) for k, v in DARK.items()}
+TONED = False  # make_styles.py turns this on
+
+
+def darker(p, steps):
+    for _ in range(steps):
+        p = DARK_RGB.get(p, p)
+    return p
 
 
 class Canvas:
@@ -65,7 +72,16 @@ class Canvas:
                 for x in range(box[0], box[2]):
                     if m[x, y]:
                         px[x, y] = DARK_RGB.get(px[x, y], px[x, y])
-        self.im.paste(rgb(INK), mask=ImageChops.subtract(solid, alpha))
+        edge = ImageChops.subtract(solid, alpha)
+        self.im.paste(rgb(INK), mask=edge)
+        if TONED and edge.getbbox():  # outline in a dark tone of the object instead of one ink for everything
+            px, m, lay, box = self.im.load(), edge.load(), layer.im.load(), edge.getbbox()
+            for y in range(box[1], box[3]):
+                for x in range(box[0], box[2]):
+                    if m[x, y]:
+                        near = [lay[q] for q in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1))
+                                if 0 <= q[0] < W and 0 <= q[1] < H and lay[q][3]]
+                        px[x, y] = darker(near[0], 2)
         self.im.alpha_composite(layer.im)
 
     def save(self, name, scale=1, check=True):
@@ -373,13 +389,30 @@ def room():
     return c
 
 
-d = Canvas(100, 84); desk(d, 2, 28); d.save('desk.png')
-r = room(); r.save('room.png')
-# scene.png: the test cast standing in the room, as the game would draw them
-people = [('hero-detailed.png', 3, 0, 222, 96), ('dana.png', 0, 0, 252, 122),
-        ('dog.png', 1, 0, 206, 130), ('visitor.png', 2, 0, 60, 100), ('dog.png', 0, 0, 96, 62)]
-for src, row, col, x, y in people:
-    s = Image.open(os.path.join(HERE, src)).convert('RGBA')
-    r.im.alpha_composite(s.crop((col * 64, row * 64, col * 64 + 40, row * 64 + 64)), (x, y))
-r.save('scene.png', 3)
-print('desk, room, scene written; all ENDESGA 32')
+PEOPLE = [('hero-detailed.png', 3, 0, 222, 96), ('dana.png', 0, 0, 252, 122), ('dog.png', 1, 0, 206, 130),
+          ('visitor.png', 2, 0, 60, 100), ('dog.png', 0, 0, 96, 62)]
+
+
+def people(r):
+    """The test cast standing in the room, as the game would draw them."""
+    for src, row, col, x, y in PEOPLE:
+        s = Image.open(os.path.join(HERE, src)).convert('RGBA').crop((col * 64, row * 64, col * 64 + 40, row * 64 + 64))
+        if TONED:  # the outer outline takes a dark tone of what it wraps
+            px = s.load()
+            for sy in range(64):
+                for sx in range(40):
+                    if px[sx, sy] == rgb(INK):
+                        q4 = [(sx + 1, sy), (sx - 1, sy), (sx, sy + 1), (sx, sy - 1)]
+                        near = [px[q] for q in q4 if 0 <= q[0] < 40 and 0 <= q[1] < 64]
+                        inside = [p for p in near if p[3] and p != rgb(INK)]
+                        if inside and (len(near) < 4 or any(not p[3] for p in near)):
+                            px[sx, sy] = darker(inside[0], 2)
+        r.im.alpha_composite(s, (x, y))
+    return r
+
+
+if __name__ == '__main__':
+    d = Canvas(100, 84); desk(d, 2, 28); d.save('desk.png')
+    r = room(); r.save('room.png')
+    people(r).save('scene.png', 3)
+    print('desk, room, scene written; all ENDESGA 32')
