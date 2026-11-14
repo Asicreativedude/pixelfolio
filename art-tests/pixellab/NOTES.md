@@ -58,3 +58,18 @@ Palette remap of A1's idle rotations (no PixelLab palette option exists at chara
 - `build_sheet.py`: packs frames into Pixelfolio's 256×256 sheet (4×4 of 64 px frames, rows down/left/right/up, columns idle/walk-a/walk-b), scaling and anchoring feet like the existing characters.
 - `sheet-*.png`: the sheets the Hall lineup uses (`src/world/maps.ts`, `testHero`/`testPx*`).
 - `e32.hex`: the #60 palette file.
+
+## Side test: drawn by Claude, no PixelLab (`art-tests/claude-drawn/`)
+
+Asi asked whether Claude can run Aseprite or just build the characters itself. Both work:
+
+- `make_char.py` draws a new NPC by code. The body, poses and walk frames are the hero's own sheet, recoloured to
+  ENDESGA 32 with long sleeves. The head (front, side, back) is drawn pixel by pixel in the script. Left is the
+  right view mirrored. Result: `visitor.png`, 12 colours, 100% ENDESGA 32, same size and outline weight as the cast.
+  About 15 minutes for the first character; a second one on the same template is a new head and a colour table.
+- `to_aseprite.lua` runs in Aseprite's batch mode and turns a sheet into `visitor.aseprite`: 12 frames, tags
+  down/left/right/up, indexed in ENDESGA 32. Aseprite runs headless only; Claude doesn't drive its window.
+- `lineup-hall.png`: hero, Claude-drawn, PixelLab-from-reference (A3) on the Hall at 3×. Rows: idle down, walk
+  right, idle up, idle left. In game it's the fifth test NPC (column 19).
+- Limits: it reuses the hero's body, so every character has his build and walk. A different body (Saruli's dress,
+  the alien) means drawing that body once by hand or by code.
