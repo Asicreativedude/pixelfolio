@@ -207,5 +207,22 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   floor. The pixel one uses 226 colours for 91 drawn colours in 6 states, so a fixed palette is possible there
   but large. This contradicts the earlier aim of pixel-stepped light ("lights and shadow don't seem pixelated
   at all" was said about the noisy first version). Waiting for Asi's reaction.
+- Asi on the ten stills: "lived in clutter is nice direction" (direction 6). Second pass on that still by the
+  same helper agent (about 10 minutes), first render kept as `directions/d06-lived-in-clutter-v1.png`:
+  - The cast takes its colours from the room's ramps and is lit by where it stands (darker on the side away
+    from the light), with contact shadows. Outline kept. Cost: faces are flatter than on the sheets.
+  - A walking path is clear from the door to the desk and along the rug; cables, backpack and skateboard moved
+    to walls. Unreadable props (headphones, banana, open box) removed; pizza box, backpack, fridge redrawn.
+  - Light: no pool adds more than one ramp step and overlapping pools have different outlines, so no rings.
+    The rug's diagonal edge in v1 was a bug (the noise that breaks band edges was switched off).
+  - `d06-lived-in-clutter-evening.png`: the same drawing with the room's levels lowered, a dusk sky and no sun
+    patches; lamp, screen, fairy lights and sign stay. Day and evening together use 44 colours (asserted 32 to
+    48). So in this direction light is part of the drawing and stays on the palette, with no light layer.
+  - `d06-lived-in-clutter-game-size.png` and `-evening-game-size.png`: the 352x240 room on the 640x360 canvas at
+    2x, to judge how small the detail is in the game.
+  - Still weak: the evening floor away from the lamp is nearly one tone; the hero's grey sides are 2 to 3 px;
+    light direction on figures is left or right only. Not tested: more than this one room, walking in the game,
+    a phone. The report's warning stands: this is the most expensive direction and the hardest to keep
+    consistent. Waiting for Asi's reaction.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.

@@ -1,14 +1,14 @@
 # All ten direction stills on one labelled sheet: directions.png, two columns, each still at full size.
 # usage (repo root): python3 -I art-tests/claude-drawn/directions/make_sheet.py
-import glob, os
+import os
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 NAMES = ['Muted world, loud clickables', 'Naive flat cartoon', 'Neon flat minimalism', 'One-bit plus one accent',
          'Lamp-lit dusk', 'Lived-in clutter', 'Soft diorama', 'Desktop chrome', 'Portrait-led PC-98', 'Paper cut-out']
 W, H, BAR, GAP = 1056, 720, 44, 12
-files = sorted(glob.glob(os.path.join(HERE, 'd[0-9][0-9]-*.png')))
-assert [int(os.path.basename(f)[1:3]) for f in files] == list(range(1, 11)), [os.path.basename(f) for f in files]
+SLUGS = ['muted-world', 'naive-flat', 'neon-flat', 'one-bit', 'lamp-lit-dusk', 'lived-in-clutter', 'soft-diorama', 'desktop-chrome', 'portrait-pc98', 'paper-cutout']
+files = [os.path.join(HERE, 'd%02d-%s.png' % (i + 1, s)) for i, s in enumerate(SLUGS)]
 sheet = Image.new('RGB', (2 * W + GAP, 5 * (H + BAR + GAP) - GAP), (14, 12, 20))
 font = ImageFont.load_default()
 for i, f in enumerate(files):
