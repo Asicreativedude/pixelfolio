@@ -2,7 +2,7 @@ import { getPlayerData } from '../utils/progressTracker';
 import { ScreenController } from '../utils/screenContorller';
 import utils from '../utils/utils';
 import { heroInitialState } from '../world/maps';
-import TitleScreenSprite from './titleScreenSprite';
+import TitleScreenSprite from './TitleScreenSprite';
 
 type TitleOption = {
   label: string;

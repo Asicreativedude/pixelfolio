@@ -1,4 +1,4 @@
-import TitleScreenSprite from './titleScreenSprite';
+import TitleScreenSprite from './TitleScreenSprite';
 import utils from '../utils/utils';
 import { heroInitialState } from '../world/maps';
 import { ScreenController } from '../utils/screenContorller';
