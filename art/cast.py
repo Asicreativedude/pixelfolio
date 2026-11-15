@@ -22,6 +22,7 @@ ART = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ART, '..', 'public')
 OUT = os.path.join(PUBLIC, 'cast')
 FRAME, READ = 64, 40
+LIFT = .5                       # the most light lifts a figure, in ramp steps (draw.LEVELS go to 1.5)
 
 WHITE, EYES, SKIN, SKIN_SHADE = (PAPER, 5), (DESK, 2), (CARD, 4), (CARD, 3)
 LINE = {'000000': None, '150908': None}
@@ -58,8 +59,10 @@ def figure(src, table, here, from_right):
             if part is None:
                 yield sx, sy, rgb(K); continue
             far = (sx - xs[0]) < .3 * (xs[-1] - xs[0]) if from_right else (xs[-1] - sx) < .3 * (xs[-1] - xs[0])
-            # a light part (level 2.5 and up) never falls below step 2 on its near side, so it stays light in the dark
-            step = max(2 if part[1] >= 2.5 else 1, min(6, int(part[1] + here + .5)))
+            # a light part (level 2.5 and up) never falls below step 2 on its near side, so it stays light in the dark;
+            # bright light lifts a part no more than LIFT, and only a white part reaches HI: lifted further, every
+            # ramp runs into the same pale amber and the figure washes out
+            step = max(2 if part[1] >= 2.5 else 1, min(6 if part[1] >= 5 else 5, int(part[1] + min(here, LIFT) + .5)))
             yield sx, sy, rgb(RAMPS[part[0]][max(1, step - far)])
 
 
