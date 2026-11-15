@@ -262,5 +262,6 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   Still open: light pools in the evening have smooth outlines now that the floor has no noise; the desk corner and the two
   potted plants are still the small room's drawings; a figure right below another covers it with its head (the engine's
   sorting, same in the Hall); the small room's `in-game-*.png` frames show the old floor; dialogue box, title screen, phone.
+- Asi on the studio second pass (e431014): "I think for prototype this is great. We can get into the nits and bits of each map later." So lived-in clutter, drawn by script, is accepted as the prototype style. Per-map polish is later work.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
