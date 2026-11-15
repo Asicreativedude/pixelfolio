@@ -74,7 +74,7 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
           {
             type: 'textMessage',
             text: 'bro, I got this scam come come',
-            faceHero: 'npcC',
+            faceHero: 'npcB',
           },
           { type: 'textMessage', text: 'TROLOLOLO ya nooobbb GGEZ' },
         ],

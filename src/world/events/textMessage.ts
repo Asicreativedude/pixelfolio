@@ -22,7 +22,7 @@ export default class TextMessage {
 
   createElement() {
     const fontImage = new Image();
-    fontImage.src = '/Letters.png';
+    fontImage.src = '/dialogue/letters.png'; // art/ui.py: Letters.png in K, on the paper box
 
     this.element = document.createElement('div');
     this.element.classList.add('TextMessage');
@@ -59,7 +59,8 @@ export default class TextMessage {
   }
 
   done() {
-    if (this.revealingText.isDone && this.element) {
+    // no revealingText: the font has not loaded (or never will), and nothing else would let the box close (#70)
+    if ((!this.revealingText || this.revealingText.isDone) && this.element) {
       // if (mButtons!.style.display != 'flex') {
       //   mButtons!.classList.add('fade-in');
       // }

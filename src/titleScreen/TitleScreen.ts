@@ -38,8 +38,9 @@ export default class TitleScreen {
           if (!player.isFirst) {
             // a save from before #69 names the unlit sheet in /characters/
             heroInitialState.src = player.selectedCharacter.replace('/characters/', '/cast/');
-            heroInitialState.x = player.lastPosition!.x;
-            heroInitialState.y = player.lastPosition!.y;
+            // null until the hero has walked a step: then maps.ts's spawn stands (#70). Not left to maps.ts alone,
+            // which reads the save once at load: Escape comes back here without a reload.
+            if (player.lastPosition) Object.assign(heroInitialState, player.lastPosition);
             ScreenController.showWorld();
           } else {
             ScreenController.showCharacterSelection();
@@ -66,7 +67,7 @@ export default class TitleScreen {
     this.arrowSprite = new TitleScreenSprite({
       x: utils.withGrid(0),
       y: utils.withGrid(0),
-      src: '../../arrowSprite.png',
+      src: '/title/arrow.png',
       frameWidth: 27,
       frameHeight: 16,
       animations: {
@@ -89,7 +90,7 @@ export default class TitleScreen {
     this.titleSprite = new TitleScreenSprite({
       x: utils.withGrid(4.5),
       y: utils.withGrid(1),
-      src: '../../titleSprite.png',
+      src: '/title/logo.png',
       frameWidth: 351,
       frameHeight: 51,
       animations: {
@@ -109,11 +110,13 @@ export default class TitleScreen {
       },
     });
     this.titleTexts = new Image();
-    this.titleTexts.src = '../../titleScreenText.png';
+    this.titleTexts.src = '/title/menu.png';
   }
 
   drawTitleScreen() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = '#131c2b'; // K, the deep teal every ramp starts on (art/draw.py)
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     const { x, y } = this.titleOptions[this.selectedOption];
     this.arrowSprite.draw(this.ctx, x, y);
     this.titleSprite.draw(this.ctx, this.titleSprite.x, this.titleSprite.y);
