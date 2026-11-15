@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "room": "python3 -I art/room.py"
   },
   "devDependencies": {
     "@types/stats.js": "^0.17.4",
