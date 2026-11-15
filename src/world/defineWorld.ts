@@ -2,10 +2,16 @@ import DirectionInput from '../utils/directionInput';
 import type { GameObjectConfig, HeroInitialState, MapConfig } from '../types';
 import WorldMap from './worldMap';
 import type GameObject from '../objects/gameObject';
-import { hallBaseObjects, createGameObjects, worldMaps } from './maps';
+import {
+  hallBaseObjects,
+  createGameObjects,
+  worldMaps,
+  devStart,
+} from './maps';
 import KeyPressListener from '../utils/keyPressListener';
 import { ScreenController } from '../utils/screenContorller';
 import { getPlayerData } from '../utils/progressTracker';
+import utils from '../utils/utils';
 
 export default class World {
   element: HTMLElement;
@@ -47,12 +53,19 @@ export default class World {
     if (this.map.gameObjects.npcASI) {
       this.cameraPerson = this.map.gameObjects.npcASI;
     }
+    //A map that knows its size keeps the camera inside it
+    if (this.map.size) {
+      this.cameraPerson = utils.cameraFocus(this.cameraPerson, this.map.size, [
+        this.canvas.width,
+        this.canvas.height,
+      ]);
+    }
     this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.lowerImage);
     //Draw Game Objects
     Object.values(this.map.gameObjects as GameObject)
       .sort((a, b) => a.sprite.getZIndex() - b.sprite.getZIndex())
       .forEach((obj) => {
-        obj.sprite.draw(this.ctx, this.cameraPerson);
+        obj.sprite.draw(this.ctx, this.cameraPerson, this.map.light);
       });
     //update all objects
     Object.values(this.map.gameObjects as GameObjectConfig).forEach(
@@ -122,7 +135,9 @@ export default class World {
     mapConfig: MapConfig,
     heroInitialState: HeroInitialState | null = null
   ) {
-    const freshObjects = createGameObjects(hallBaseObjects);
+    const freshObjects = createGameObjects(
+      mapConfig.baseObjects ?? hallBaseObjects
+    );
     const playerData = getPlayerData();
     this.map = new WorldMap({ ...mapConfig, gameObjects: freshObjects });
     playerData.lastMap = this.map;
@@ -149,7 +164,7 @@ export default class World {
 
   init(): void {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.startMap(worldMaps.Hall);
+    this.startMap(devStart ?? worldMaps.Hall, devStart?.entrance);
 
     this.directionInput = new DirectionInput();
     this.directionInput.init();

@@ -31,6 +31,34 @@ const utils = {
     return { x, y };
   },
 
+  // The point the camera centres on for a map of the given size (px) on a view (the canvas, px). It follows
+  // focus but stops at the map's edges; a map smaller than the view on an axis sits centred on that axis.
+  // The map is drawn at (withGrid(9.5) - x, withGrid(5) - y), see WorldMap.drawImageLayer.
+  cameraFocus(
+    focus: { x: number; y: number },
+    [w, h]: [number, number],
+    [viewW, viewH]: [number, number]
+  ) {
+    const axis = (at: number, size: number, view: number, offset: number) => {
+      const lo = offset; // the map's near edge on the view's
+      const hi = size - view + offset; // its far edge on the view's
+      return hi < lo
+        ? Math.round((lo + hi) / 2)
+        : Math.min(Math.max(at, lo), hi);
+    };
+    return {
+      x: axis(focus.x, w, viewW, utils.withGrid(9.5)),
+      y: axis(focus.y, h, viewH, utils.withGrid(5)),
+    };
+  },
+
+  // Which lit sheet a figure at (x, y) takes: the map's light grid, keyed like walls, for the tile the figure
+  // is mostly on. 0, the top sheet, where the map has no grid or leaves the tile out.
+  lightAt(light: Record<string, number> | undefined, x: number, y: number) {
+    const tile = (n: number) => Math.round(n / 32) * 32;
+    return light?.[`${tile(x)},${tile(y)}`] ?? 0;
+  },
+
   // Returns the reverse of a given direction string.
   // Example: 'left' → 'right', 'up' → 'down'
 

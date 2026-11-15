@@ -1,4 +1,5 @@
 import type { SpriteConfig } from '../types';
+import utils from './utils';
 
 // Load a sprite sheet (image)
 // Optionally load and draw a shadow
@@ -193,7 +194,14 @@ export default class Sprite {
   // Computes the draw position by offsetting relative to the camera.
   // Draws shadow first (if loaded), then the correct sprite frame.
   // Calls updateScheduledAnimation and updateAnimationProgress to advance the animation.
-  draw(ctx: CanvasRenderingContext2D, cameraPerson: { x: number; y: number }) {
+  // light: the map's light grid. A person's image can stack lit sheets of four rows each, top to bottom
+  // (art/room.py: light level * 2, + 1 lit from the right); the grid picks one by the tile under the feet.
+  // An image with fewer sheets than the grid asks for draws its top one.
+  draw(
+    ctx: CanvasRenderingContext2D,
+    cameraPerson: { x: number; y: number },
+    light?: Record<string, number>
+  ) {
     const CAMERA_OFFSET_X = ctx.canvas.width / 2 - 16; // Adjusted for the left side of the screen
     const CAMERA_OFFSET_Y = ctx.canvas.height / 2 + 8; // Adjusted for the top of the screen
 
@@ -217,11 +225,16 @@ export default class Sprite {
     this.isShadowLoaded && ctx.drawImage(this.shadow, x - 4, y - 2);
     const animation = this.animations[this.currentAnimation];
     const [frameX, frameY] = animation.frames[this.frameIndex];
+    const sheetHeight = 4 * this.frameHeight;
+    const lit = this.gameObject.isPerson
+      ? utils.lightAt(light, this.gameObject.x, this.gameObject.y)
+      : 0;
+    const sheet = (lit + 1) * sheetHeight <= this.image.height ? lit : 0;
     this.isLoaded &&
       ctx.drawImage(
         this.image,
         frameX * this.frameWidth,
-        frameY * this.frameHeight,
+        frameY * this.frameHeight + sheet * sheetHeight,
         this.frameWidth,
         this.frameHeight,
         x,

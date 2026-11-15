@@ -14,6 +14,8 @@ export default class WorldMap {
   upperImage: HTMLImageElement;
   isCutscenePlaying: boolean;
   beginingCutsceneIndex: number;
+  size?: [number, number];
+  light?: Record<string, number>;
 
   constructor(config: MapConfig) {
     this.world = null;
@@ -34,6 +36,8 @@ export default class WorldMap {
     this.isCutscenePlaying = false;
 
     this.beginingCutsceneIndex = 0;
+    this.size = config.size;
+    this.light = config.light;
   }
 
   // Draws map layers relative to the camera’s position.
