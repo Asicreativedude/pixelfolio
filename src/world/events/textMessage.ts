@@ -59,7 +59,8 @@ export default class TextMessage {
   }
 
   done() {
-    if (this.revealingText.isDone && this.element) {
+    // no revealingText: the font has not loaded (or never will), and nothing else would let the box close (#70)
+    if ((!this.revealingText || this.revealingText.isDone) && this.element) {
       // if (mButtons!.style.display != 'flex') {
       //   mButtons!.classList.add('fade-in');
       // }
