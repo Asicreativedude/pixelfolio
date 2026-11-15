@@ -5,6 +5,7 @@ import MapElements from '../objects/mapElements';
 import type GameObject from '../objects/gameObject';
 import Person from '../objects/person';
 import { getPlayerData } from '../utils/progressTracker';
+import studio from '../../public/rooms/studio.json';
 
 type GameObjectConfig = {
   type: 'Person' | 'Collectable' | 'MapElement'; // Add other types as needed
@@ -194,7 +195,48 @@ export function createGameObjects(
 }
 
 const hallWalls = extractWallsFromAsepriteJson(collisionJson);
+
+// Dev only (npm run dev): /?map=Studio starts the world in that map, ?time=day or ?time=evening picks a room's version.
+const devParams = new URLSearchParams(
+  import.meta.env.DEV ? location.search : ''
+);
+
+// A room has a day and an evening version; the visitor's clock picks one, evening from 18:00 to 06:00.
+// ponytail: read once when the game loads, so a visit across 18:00 keeps its version until a reload.
+const timeOfDay = (hour = new Date().getHours()): 'day' | 'evening' => {
+  const forced = devParams.get('time');
+  if (forced === 'day' || forced === 'evening') return forced;
+  return hour >= 18 || hour < 6 ? 'evening' : 'day';
+};
+
+// A room drawn by art/room.py (public/rooms/<name>-*.png and <name>.json): the lower image, the upper one the
+// figures walk behind, walls, the light grid for the lit sheets and the size the camera stays inside.
+// entrance: where the hero stands when nothing else places it, the room's spots.hero tile.
+type RoomData = {
+  size: number[];
+  walls: string[];
+  light: Record<'day' | 'evening', Record<string, number>>;
+  spots: { hero: number[] };
+};
+const room = (name: string, data: RoomData, time = timeOfDay()) => {
+  const [col, row] = data.spots.hero;
+  return {
+    lowerSrc: `/rooms/${name}-${time}.png`,
+    upperSrc: `/rooms/${name}-upper-${time}.png`,
+    walls: Object.fromEntries(data.walls.map((key) => [key, true])),
+    light: data.light[time],
+    size: data.size as [number, number],
+    baseObjects: { hero: heroInitialState },
+    entrance: {
+      x: utils.withGrid(col + 1),
+      y: utils.withGrid(row - 1),
+      direction: 'up',
+    },
+  };
+};
+
 export const worldMaps: any = {
+  Studio: room('studio', studio),
   Hall: {
     lowerSrc: '../../Hall2.png',
     gameObjects: {
@@ -1285,3 +1327,8 @@ export const worldMaps: any = {
   //   },
   // },
 };
+
+const devMap = devParams.get('map') ?? '';
+export const devStart = Object.hasOwn(worldMaps, devMap)
+  ? worldMaps[devMap]
+  : null;

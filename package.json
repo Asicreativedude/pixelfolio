@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "room": "python3 -I art/room.py"
+    "room": "python3 -I art/room.py",
+    "test": "node --test test/*.test.ts"
   },
   "devDependencies": {
     "@types/stats.js": "^0.17.4",

@@ -140,6 +140,12 @@ export interface MapConfig {
   cutsceneSpaces?: Record<string, EventWrapper[]>;
   beginingCutscene?: CutsceneEvent[];
   projectReveal?: Record<string, any>;
+  // The figures this map starts with (maps.ts createGameObjects); the Hall's when left out.
+  baseObjects?: Record<string, any>;
+  // The map image's size in px [w, h]: the camera follows the hero and stops at the map's edges.
+  size?: [number, number];
+  // Which lit sheet a figure takes on each tile, keyed like walls (art/room.py writes it).
+  light?: Record<string, number>;
 }
 
 // export interface TitleScreenConfig {
