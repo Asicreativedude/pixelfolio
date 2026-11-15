@@ -84,16 +84,9 @@ body {
     flex-direction: column;
     justify-content: space-around;
   }
-  .game-container {
-    transform: unset;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-  }
-  .game-canvas {
-    width: 100%;
-    height: 100%;
-  }
+  /* no size for .game-container here: it stays 640x360 at every width and main.ts scales it to fit the window.
+     Stretching it to the window as well (it was 100% x 100%) scaled it twice, past the screen's bottom edge,
+     and took the dialogue box, which sits on that edge, with it. */
   .mobileButtons-container {
     display: none;
     position: absolute;

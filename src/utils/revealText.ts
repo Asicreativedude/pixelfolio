@@ -18,6 +18,7 @@ export default class RevealingText {
   maxWidth: number;
   lineHeight: number = LINE_HEIGHT;
   distanceFromTop: number;
+  instant = false;
 
   constructor(config: {
     canvas: HTMLCanvasElement;
@@ -42,6 +43,10 @@ export default class RevealingText {
     wordIndex: number = 0,
     charIndex: number = 0
   ) {
+    const next = (w: number, c: number, ms: number) => {
+      if (this.instant) this.revealOneCharacter(words, w, c);
+      else this.timeout = setTimeout(() => this.revealOneCharacter(words, w, c), ms);
+    };
     if (wordIndex >= words.length) {
       this.isDone = true;
       return;
@@ -60,10 +65,7 @@ export default class RevealingText {
 
       // Prevent leading space on new line
       if (word[0] === ' ') {
-        this.timeout = setTimeout(
-          () => this.revealOneCharacter(words, wordIndex + 1, 0),
-          this.speed
-        );
+        next(wordIndex + 1, 0, this.speed);
         return;
       }
     }
@@ -86,17 +88,11 @@ export default class RevealingText {
     this.currentX += CHAR_SPACING;
 
     if (charIndex < word.length - 1) {
-      this.timeout = setTimeout(
-        () => this.revealOneCharacter(words, wordIndex, charIndex + 1),
-        char === ' ' ? 0 : this.speed
-      );
+      next(wordIndex, charIndex + 1, char === ' ' ? 0 : this.speed);
     } else {
       // Add space after word
       this.currentX += 8;
-      this.timeout = setTimeout(
-        () => this.revealOneCharacter(words, wordIndex + 1, 0),
-        this.speed
-      );
+      next(wordIndex + 1, 0, this.speed);
     }
   }
 
@@ -108,38 +104,11 @@ export default class RevealingText {
     };
   }
 
+  // Skipping ahead redraws through revealOneCharacter with no delays, so the text lands where the reveal puts it.
   warpToDone() {
     clearTimeout(this.timeout);
-    this.isDone = true;
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.currentX = LINEMARGIN * 2;
-    this.currentY = 0;
-    const words = this.text.split(' ');
-    for (const word of words) {
-      const wordPixelLength = word.length * CHAR_SPACING;
-      if (this.currentX + wordPixelLength > this.canvas.width - LINEMARGIN) {
-        this.currentX = 32;
-        this.currentY += this.lineHeight;
-      }
-      for (const char of word) {
-        const { x, y } = this.getCharCoords(char);
-        this.ctx.filter = 'brightness(0.5)'; // Optional: invert colors for effect
-        this.ctx.drawImage(
-          this.fontImage,
-          x,
-          y,
-          CHAR_WIDTH,
-          CHAR_HEIGHT,
-          this.currentX,
-          this.currentY,
-          CHAR_WIDTH,
-          CHAR_HEIGHT
-        );
-        this.ctx.filter = 'none'; // Reset filter
-        this.currentX += CHAR_SPACING;
-      }
-      this.currentX += CHAR_SPACING; // Add space after word
-    }
+    this.instant = true;
+    this.init();
   }
 
   init() {

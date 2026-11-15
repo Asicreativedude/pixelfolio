@@ -6,7 +6,9 @@
 #   no outlines. A pixel is a material and a level on that material's ramp; an object is told from its
 #     neighbour by a lit top edge, a dark bottom edge and the shadow it casts down and right (prop()).
 #   light is painted in: pools of level (window, lamp, fairy lights) are added before the ramp is looked up, and
-#     a slow noise breaks the band edges so they read as brushwork, not as a gradient.
+#     a slow noise breaks the band edges so they read as brushwork, not as a gradient. On the boards a plank takes
+#     its light whole, read at its middle row a few pixels off, so a pool's edge steps along the planks (#68). Deck plates (plates()) are lit
+#     the same way, a plate at a time.
 #   the same drawing is built twice, by day and in the evening: only the level of the room and the list of pools
 #     change, there is no light layer over the picture.
 # Taken from art-tests/claude-drawn/directions/make_d06_lived_in_clutter.py and make_d06_studio.py on the
@@ -34,15 +36,17 @@ FLOOR, DESK, WALL, GREEN, METAL, TEAL, CARD, RED, PAPER, WOOD = range(1, 11)
 FLAT = 50                       # material + FLAT: not lit, not shadowed (screens, bulbs, the sky)
 lights = []                     # (image, steps of level it adds at full white)
 THINGS = []                     # (mask, solid, tall) of every thing() since canvas()
+SHIFT = [0]                     # per plank of boards(), how far off its light is read; plank 0 is no plank
 
 
 def canvas(w, h, evening):
     """Start a room of w x h px, by day or in the evening."""
-    global W, H, EVE, mat, lvl, shd, dm, dl
+    global W, H, EVE, mat, lvl, shd, dm, dl, plank
     W, H, EVE = w, h, evening
     mat, lvl, shd = (Image.new('L', (W, H)) for _ in range(3))
     dm, dl = ImageDraw.Draw(mat), ImageDraw.Draw(lvl)
-    lights.clear(); THINGS.clear()
+    lights.clear(); THINGS.clear(); del SHIFT[1:]
+    plank = {k: np.zeros((H, W), np.int32) for k in ('id', 'top', 'mat', 'lvl')}   # boards() fills it
 
 
 def R(x, y, w, h, m, l):        # rectangle of material m at level l
@@ -101,19 +105,41 @@ def light(amp, blur, draw):
 # --- props ------------------------------------------------------------------------------------------------------
 def boards(x0, x1, y0, y1, rnd):
     """Floorboards. A plank is one of two woods half a step apart, and it is that wood from end to end: the
-    floor's tone changes at plank edges only, never in patches across them."""
+    floor's tone changes at plank edges only, never in patches across them. render() lights a plank whole.
+    Nothing is drawn outside x0..x1, y0..y1: the first and last plank of a row are cut there."""
+    def cut(x, y, w, h, m, l):
+        xa, xb, yb = max(x, x0), min(x + w, x1), min(y + h, y1)
+        if xb > xa and yb > y:
+            R(xa, y, xb - xa, yb - y, m, l)
     for y in range(y0, y1, 8):
         x = x0 - rnd.randrange(40)
         while x < x1:
             n = rnd.randrange(40, 96)
             a, b = (FLOOR, WOOD) if rnd.random() < .55 else (WOOD, FLOOR)
-            R(x, y, n, 8, a, 3.3)
+            cut(x, y, n, 8, a, 3.3)
             if rnd.random() < .6:                               # one streak of grain, in the other wood
                 g = rnd.randrange(10, n - 12)
-                R(x + rnd.randrange(4, n - g - 2), y + rnd.randrange(2, 6), g, 1, b, 3.3)
-            R(x, y, 1, 8, FLOOR, 2.3)                           # the joint at its end
+                cut(x + rnd.randrange(4, n - g - 2), y + rnd.randrange(2, 6), g, 1, b, 3.3)
+            cut(x, y, 1, 8, FLOOR, 2.3)                         # the joint at its end
+            rows, cols = slice(y, min(y + 8, y1)), slice(max(x, x0), max(min(x + n, x1), x0))
+            plank['id'][rows, cols] = len(SHIFT); plank['top'][rows, cols] = y
+            SHIFT.append(random.Random(len(SHIFT)).randrange(-4, 5))
             x += n
-        R(x0, y + 7, x1 - x0, 1, FLOOR, 2.3)
+        cut(x0, y + 7, x1 - x0, 1, FLOOR, 2.3)
+    # what the boards look like now: a pixel drawn over later (a rug, a shadow toned in) is no longer plank
+    plank['mat'][y0:y1, x0:x1] = np.asarray(mat)[y0:y1, x0:x1]; plank['lvl'][y0:y1, x0:x1] = np.asarray(lvl)[y0:y1, x0:x1]
+
+
+def plates(x0, x1, y0, y1, size, draw):
+    """Deck plates: draw(px, py) paints the size x size plate at px, py. Like a plank, render() lights a plate
+    whole, at its middle, with no brushwork: the light steps from plate to plate."""
+    for py in range(y0, y1, size):
+        for px in range(x0, x1, size):
+            draw(px, py)
+            rows, cols = slice(py, min(py + size, y1)), slice(px, min(px + size, x1))
+            plank['id'][rows, cols] = len(SHIFT); plank['top'][rows, cols] = py + size // 2 - 3
+            SHIFT.append(0)
+    plank['mat'][y0:y1, x0:x1] = np.asarray(mat)[y0:y1, x0:x1]; plank['lvl'][y0:y1, x0:x1] = np.asarray(lvl)[y0:y1, x0:x1]
 
 
 def sign(x, y):
@@ -569,17 +595,21 @@ def render():
     slow = Image.new('L', (W // 18 + 2, H // 5 + 2))            # slow noise, stretched along the boards
     slow.putdata([rnd.randrange(256) for _ in range(slow.width * slow.height)])
     N = slow.resize((W, H), Image.BICUBIC).getdata()
-    total = [ambient] * (W * H)
+    total = np.full(W * H, ambient)
     for im, amp in lights:
-        for i, v in enumerate(im.getdata()):
-            if v:
-                total[i] += v * amp / 255
+        total += np.asarray(im, np.float64).ravel() * amp / 255
+    total = total.tolist()
     M, V, S = mat.getdata(), lvl.getdata(), shd.getdata()
+    # a pixel still as boards() drew it is lit as its plank is: at the plank's middle row, SHIFT px along
+    on = (plank['id'] > 0) & (plank['mat'] == np.asarray(mat)) & (plank['lvl'] == np.asarray(lvl))
+    xs = np.clip(np.arange(W) + np.array(SHIFT)[plank['id']], 0, W - 1)
+    lit = np.where(on, np.clip(plank['top'] + 3, 0, H - 1) * W + xs, np.arange(W * H).reshape(H, W)).ravel().tolist()
+    on = on.ravel().tolist()
     out = []
     for i in range(W * H):
         m, v = M[i], V[i] / U
         if m and m < FLAT:
-            v += total[i] - S[i] / 255 + (N[i] - 128) / 128 * (.3 if m == WALL else 0 if m in (FLOOR, WOOD) else .12)   # brushwork on the plaster; planks stay whole
+            v += total[lit[i]] - S[i] / 255 + (N[i] - 128) / 128 * (0 if on[i] or m in (FLOOR, WOOD) else .3 if m == WALL else .12)   # brushwork on the plaster; planks and plates stay whole
         out.append(rgb(RAMPS[m % FLAT][max(0, min(6, int(v + .5)))] if m else K))
     im = Image.new('RGB', (W, H)); im.putdata(out)
     im.light = total

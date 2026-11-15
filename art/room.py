@@ -4,9 +4,11 @@
 #     furniture that stand in front of a figure on a free tile (draw.tiles() has the rule)
 #   <name>.json   size; walls, the blocked tiles; light, for day and evening the cast's sheet on each free tile
 #     (light level index * 2 + 1 when the light comes from the right, draw.LEVELS); spots, the tiles
-#     (col, row) where the cast starts
+#     (col, row) where the cast starts and where cutscenes go
 # and art/check/<name>.png, not committed: the room at 2x with the grid, free tiles green, blocked red, upper
 # layer magenta.
+# A room's DOORS, if it has any, are tiles on the edge that draw.tiles() keeps as wall but that are open: the
+# doorways. Every free tile on the edge of the map gets a wall on the tile beyond it, so nobody walks off the map.
 # The game puts a figure at x = (col + 1) * 32, y = (row - 1) * 32 for the tile (col, row) under its feet, and
 # draws its 64 px frame with the top left at (col * 32, row * 32 - 36). walls and light are keyed that way.
 # usage (repo root): npm run room -- studio     or: python3 -I art/room.py [name ...]   (no name: every room)
@@ -43,6 +45,7 @@ def export(name):
     for when, evening in (('day', False), ('evening', True)):
         room = rooms[when] = room_mod.build(evening)
         free, mask = draw.tiles()
+        free |= {tuple(t) for t in getattr(room_mod, 'DOORS', ())}
         frees.append(free)
         room.save(os.path.join(OUT, '%s-%s.png' % (name, when)))
         used |= {c for _, c in room.getcolors(99999)}
@@ -58,6 +61,8 @@ def export(name):
     assert len(free) >= .55 * (cols - 2) * (rows - 3), len(free)
     assert len(used) <= 48, len(used)                           # day and evening together
     walls = [key(c, r) for r in range(rows) for c in range(cols) if (c, r) not in free]
+    walls += [key(c, r) for c0, r0 in sorted(free, key=lambda t: t[::-1])
+              for c, r in ((c0, r0 - 1), (c0 - 1, r0), (c0 + 1, r0), (c0, r0 + 1)) if not (0 <= c < cols and 0 <= r < rows)]
     with open(os.path.join(OUT, name + '.json'), 'w') as f:
         json.dump({'size': [draw.W, draw.H], 'walls': walls, 'light': light, 'spots': room_mod.SPOTS}, f, indent=1)
     draw.check(rooms['day'], free, mask, room_mod.SPOTS).save(os.path.join(ART, 'check', name + '.png'))

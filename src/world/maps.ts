@@ -1,11 +1,10 @@
 import utils from '../utils/utils';
-import { extractWallsFromAsepriteJson } from '../utils/extractWallsFromAsepriteJson';
-import collisionJson from './mapsData/hallData.json';
 import MapElements from '../objects/mapElements';
 import type GameObject from '../objects/gameObject';
 import Person from '../objects/person';
 import { getPlayerData } from '../utils/progressTracker';
 import studio from '../../public/rooms/studio.json';
+import hall from '../../public/rooms/hall.json';
 
 type GameObjectConfig = {
   type: 'Person' | 'Collectable' | 'MapElement'; // Add other types as needed
@@ -15,13 +14,19 @@ type GameObjectConfig = {
   // Add any other shared config properties needed
   [key: string]: any;
 };
+// Where a figure stands on the tile (col, row) of a room's image: art/room.py keys walls and light the same way.
+const onTile = ([col, row]: number[]) => ({
+  x: utils.withGrid(col + 1),
+  y: utils.withGrid(row - 1),
+});
+
 const playerData = getPlayerData();
 export const heroInitialState: GameObjectConfig = {
   type: 'Person',
   useShadow: true,
   isPlayerControlled: true,
-  x: playerData.lastPosition?.x ?? utils.withGrid(10),
-  y: playerData.lastPosition?.y ?? utils.withGrid(6),
+  ...onTile(hall.spots.hero),
+  ...playerData.lastPosition,
   src: '',
 };
 export const hallBaseObjects: Record<string, GameObjectConfig> = {
@@ -30,8 +35,7 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
     type: 'Person',
     useShadow: true,
     isPlayerControlled: false,
-    x: utils.withGrid(24),
-    y: utils.withGrid(9),
+    ...onTile(hall.spots.npcA),
     src: '../../characters/chich.png',
     behaviorLoop: [
       { type: 'stand', direction: 'left', time: 800 },
@@ -56,8 +60,7 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
     type: 'Person',
     useShadow: true,
     isPlayerControlled: false,
-    x: utils.withGrid(3),
-    y: utils.withGrid(3),
+    ...onTile(hall.spots.npcB),
     src: '../../characters/iluz.png',
     behaviorLoop: [
       { type: 'stand', direction: 'right', time: 800 },
@@ -82,8 +85,7 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
     type: 'Person',
     useShadow: true,
     isPlayerControlled: false,
-    x: utils.withGrid(5),
-    y: utils.withGrid(14),
+    ...onTile(hall.spots.npcC[0]), // walks hall.spots.npcC, there and back
     src: '../../characters/iluz.png',
     behaviorLoop: [
       { type: 'walk', direction: 'right' },
@@ -112,10 +114,10 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
       },
     ],
   },
+  // the sign over the plinth drawn in the Hall's art (art/rooms/hall.py, pedestal())
   hologram: {
     type: 'MapElement',
-    x: utils.withGrid(20),
-    y: utils.withGrid(9),
+    ...onTile(hall.spots.hologram),
     src: '../../hallHologram.png',
     frameWidth: 130,
     frameHeight: 200,
@@ -163,15 +165,6 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
       interval: 7000,
     },
   },
-  hologramBase: {
-    type: 'MapElement',
-    x: utils.withGrid(20),
-    y: utils.withGrid(9),
-    src: '../../hallHologramBase.png',
-    frameWidth: 130,
-    frameHeight: 200,
-    zIndexOffset: -128,
-  },
 };
 
 export function createGameObjects(
@@ -193,8 +186,6 @@ export function createGameObjects(
   }
   return objects;
 }
-
-const hallWalls = extractWallsFromAsepriteJson(collisionJson);
 
 // Dev only (npm run dev): /?map=Studio starts the world in that map, ?time=day or ?time=evening picks a room's version.
 const devParams = new URLSearchParams(
@@ -219,7 +210,6 @@ type RoomData = {
   spots: { hero: number[] };
 };
 const room = (name: string, data: RoomData, time = timeOfDay()) => {
-  const [col, row] = data.spots.hero;
   return {
     lowerSrc: `/rooms/${name}-${time}.png`,
     upperSrc: `/rooms/${name}-upper-${time}.png`,
@@ -227,159 +217,19 @@ const room = (name: string, data: RoomData, time = timeOfDay()) => {
     light: data.light[time],
     size: data.size as [number, number],
     baseObjects: { hero: heroInitialState },
-    entrance: {
-      x: utils.withGrid(col + 1),
-      y: utils.withGrid(row - 1),
-      direction: 'up',
-    },
+    entrance: { ...onTile(data.spots.hero), direction: 'up' },
   };
 };
 
 export const worldMaps: any = {
   Studio: room('studio', studio),
+  // The doorways' tiles are hall.spots.doorTop, doorBottom, doorLeft and doorRight: where a changeMap goes once
+  // the world plan (#58) says which map each one leads to.
   Hall: {
-    lowerSrc: '../../Hall2.png',
-    gameObjects: {
-      ...createGameObjects(hallBaseObjects),
-    },
-    walls: hallWalls,
-    cutsceneSpaces: {
-      // [utils.asGridCoord(38, 4)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'threeDRealm',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(38, 5)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'threeDRealm',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(14, 18)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'OutsideWorld',
-      //         x: utils.withGrid(18),
-      //         y: utils.withGrid(1),
-      //         direction: 'down',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(13, 18)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'OutsideWorld',
-      //         x: utils.withGrid(18),
-      //         y: utils.withGrid(1),
-      //         direction: 'down',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(0, 12)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'ContactPage',
-      //         x: utils.withGrid(14),
-      //         y: utils.withGrid(4),
-      //         direction: 'left',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(0, 13)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'ContactPage',
-      //         x: utils.withGrid(14),
-      //         y: utils.withGrid(4),
-      //         direction: 'left',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(0, 4)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'AboutPage',
-      //         x: utils.withGrid(13),
-      //         y: utils.withGrid(10),
-      //         direction: 'left',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(0, 5)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'AboutPage',
-      //         x: utils.withGrid(13),
-      //         y: utils.withGrid(10),
-      //         direction: 'left',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(18, 1)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'ProjectsPage',
-      //         x: utils.withGrid(29),
-      //         y: utils.withGrid(10),
-      //         direction: 'up',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(19, 1)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'ProjectsPage',
-      //         x: utils.withGrid(29),
-      //         y: utils.withGrid(10),
-      //         direction: 'up',
-      //       },
-      //     ],
-      //   },
-      // ],
-      // [utils.asGridCoord(20, 2)]: [
-      //   {
-      //     events: [
-      //       {
-      //         type: 'changeMap',
-      //         map: 'ProjectsPage',
-      //         x: utils.withGrid(29),
-      //         y: utils.withGrid(10),
-      //         direction: 'up',
-      //       },
-      //     ],
-      //   },
-      // ],
-    },
+    ...room('hall', hall),
+    baseObjects: hallBaseObjects,
+    // The old Hall's cutscenes (threeDRealm, and changeMap to OutsideWorld, ContactPage, AboutPage and
+    // ProjectsPage) were commented out and sat on tiles the redraw blocks; the door spots above replace them.
   },
   // OutsideWorld: {
   //   lowerSrc: '../../Maps/OutsideWorld.png',
