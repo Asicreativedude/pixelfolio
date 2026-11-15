@@ -36,7 +36,7 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
     useShadow: true,
     isPlayerControlled: false,
     ...onTile(hall.spots.npcA),
-    src: '../../characters/chich.png',
+    src: '/cast/chich.png',
     behaviorLoop: [
       { type: 'stand', direction: 'left', time: 800 },
       { type: 'stand', direction: 'up', time: 800 },
@@ -61,7 +61,7 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
     useShadow: true,
     isPlayerControlled: false,
     ...onTile(hall.spots.npcB),
-    src: '../../characters/iluz.png',
+    src: '/cast/iluz.png',
     behaviorLoop: [
       { type: 'stand', direction: 'right', time: 800 },
       { type: 'stand', direction: 'down', time: 800 },
@@ -86,7 +86,7 @@ export const hallBaseObjects: Record<string, GameObjectConfig> = {
     useShadow: true,
     isPlayerControlled: false,
     ...onTile(hall.spots.npcC[0]), // walks hall.spots.npcC, there and back
-    src: '../../characters/iluz.png',
+    src: '/cast/iluz.png',
     behaviorLoop: [
       { type: 'walk', direction: 'right' },
       { type: 'walk', direction: 'right' },

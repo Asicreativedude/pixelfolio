@@ -36,7 +36,8 @@ export default class TitleScreen {
           this.gameStarted = true;
           const player = getPlayerData();
           if (!player.isFirst) {
-            heroInitialState.src = player.selectedCharacter;
+            // a save from before #69 names the unlit sheet in /characters/
+            heroInitialState.src = player.selectedCharacter.replace('/characters/', '/cast/');
             heroInitialState.x = player.lastPosition!.x;
             heroInitialState.y = player.lastPosition!.y;
             ScreenController.showWorld();
