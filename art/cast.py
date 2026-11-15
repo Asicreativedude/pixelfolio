@@ -5,15 +5,18 @@
 # and art/check/cast.png, not committed: every figure's front frame on every sheet, at 4x.
 # The drawing and the thin outline stay Asi's. Each colour of a sheet is a part, (ramp, level in daylight); the
 # light where the figure stands moves every part by the same steps, so the sheet's own shading stays one step
-# apart, and the side of the figure away from the light is one step darker. None is the outline: K, never lit.
+# apart, and the side of the figure away from the light is one step darker. None is the outline: K, never lit,
+# and no part goes as dark as K. The contact shadow under the feet is in the sheet, as on the prototype.
 # Asi's files are only read. A frame is read from its left 40 px: the figures are 31 px wide, and saruli.png has
 # 9 stray pixels at the right edge of three frames, which this leaves out.
-# usage (repo root): npm run cast     or: python3 -I art/cast.py
+# A sheet in public/cast/ is Asi's to touch up once it is there, so a run only writes the sheets that are missing;
+# name a figure to build its sheet again over whatever is there.
+# usage (repo root): npm run cast [-- name ...]     or: python3 -I art/cast.py [name ...]
+# Needs Pillow at the version in art/requirements.txt: other versions may move pixels.
 import os, sys
-from PIL import Image
+from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))     # python3 -I leaves the script's folder out
-import draw
-from draw import CARD, DESK, FLOOR, GREEN, METAL, PAPER, RED, TEAL, LEVELS, RAMPS, K, rgb
+from draw import CARD, DESK, FLOOR, GREEN, METAL, PAPER, RED, TEAL, WALL, LEVELS, RAMPS, K, rgb
 
 ART = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ART, '..', 'public')
@@ -55,8 +58,9 @@ def figure(src, table, here, from_right):
             if part is None:
                 yield sx, sy, rgb(K); continue
             far = (sx - xs[0]) < .3 * (xs[-1] - xs[0]) if from_right else (xs[-1] - sx) < .3 * (xs[-1] - xs[0])
+            # a light part (level 2.5 and up) never falls below step 2 on its near side, so it stays light in the dark
             step = max(2 if part[1] >= 2.5 else 1, min(6, int(part[1] + here + .5)))
-            yield sx, sy, rgb(RAMPS[part[0]][step - far])
+            yield sx, sy, rgb(RAMPS[part[0]][max(1, step - far)])
 
 
 def sheets(src, table):
@@ -66,8 +70,11 @@ def sheets(src, table):
     out = Image.new('RGBA', (4 * FRAME, 4 * FRAME * len(LEVELS) * 2))
     for v in range(len(LEVELS) * 2):
         for fy in range(4):
+            x0, _, x1, _ = s.crop((0, fy * FRAME, READ, fy * FRAME + FRAME)).getbbox()     # one shadow per row: no jitter
             for fx in range(4):
                 frame = Image.new('RGBA', (FRAME, FRAME))
+                d = ImageDraw.Draw(frame)                       # the contact shadow: a soft rim and a core
+                d.ellipse((x0 - 2, 57, x1 + 1, 65), fill=(*rgb(K), 60)); d.ellipse((x0 + 2, 59, x1 - 3, 64), fill=(*rgb(K), 120))
                 crop = s.crop((fx * FRAME, fy * FRAME, fx * FRAME + FRAME, fy * FRAME + FRAME)).load()
                 for x, y, c in figure(crop, table, LEVELS[v // 2], v % 2):
                     frame.putpixel((x, y), (*c, 255))
@@ -77,14 +84,18 @@ def sheets(src, table):
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True); os.makedirs(os.path.join(ART, 'check'), exist_ok=True)
-    built = {}
+    named = sys.argv[1:]
+    assert set(named) <= set(CAST), 'no such figure: %s' % sorted(set(named) - set(CAST))
     for name, (src, table) in CAST.items():
-        built[name] = sheets(src, table)
-        built[name].save(os.path.join(OUT, name + '.png'))
+        path = os.path.join(OUT, name + '.png')
+        if name in named or not os.path.exists(path):
+            sheets(src, table).save(path); print('cast: built', name)
+        else:
+            print('cast: kept', name, '(name it to build it again)')
     n = len(LEVELS) * 2
-    check = Image.new('RGBA', (n * 36, len(built) * FRAME), rgb(RAMPS[draw.WALL][3]))
-    for i, im in enumerate(built.values()):
+    check = Image.new('RGBA', (n * 36, len(CAST) * FRAME), rgb(RAMPS[WALL][3]))
+    for i, name in enumerate(CAST):
+        im = Image.open(os.path.join(OUT, name + '.png')).convert('RGBA')
         for v in range(n):
             check.alpha_composite(im.crop((0, v * 4 * FRAME, 32, v * 4 * FRAME + FRAME)), (v * 36 + 2, i * FRAME))
     check.resize((check.width * 4, check.height * 4), Image.NEAREST).save(os.path.join(ART, 'check', 'cast.png'))
-    print('cast: %s, %d sheets each, into %s' % (', '.join(built), n, os.path.normpath(OUT)))
