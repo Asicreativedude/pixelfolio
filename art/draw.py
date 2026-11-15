@@ -7,7 +7,8 @@
 #     neighbour by a lit top edge, a dark bottom edge and the shadow it casts down and right (prop()).
 #   light is painted in: pools of level (window, lamp, fairy lights) are added before the ramp is looked up, and
 #     a slow noise breaks the band edges so they read as brushwork, not as a gradient. On the boards a plank takes
-#     its light whole, read at its middle row a few pixels off, so a pool's edge steps along the planks (#68).
+#     its light whole, read at its middle row a few pixels off, so a pool's edge steps along the planks (#68). Deck plates (plates()) are lit
+#     the same way, a plate at a time.
 #   the same drawing is built twice, by day and in the evening: only the level of the room and the list of pools
 #     change, there is no light layer over the picture.
 # Taken from art-tests/claude-drawn/directions/make_d06_lived_in_clutter.py and make_d06_studio.py on the
@@ -126,6 +127,18 @@ def boards(x0, x1, y0, y1, rnd):
             x += n
         cut(x0, y + 7, x1 - x0, 1, FLOOR, 2.3)
     # what the boards look like now: a pixel drawn over later (a rug, a shadow toned in) is no longer plank
+    plank['mat'][y0:y1, x0:x1] = np.asarray(mat)[y0:y1, x0:x1]; plank['lvl'][y0:y1, x0:x1] = np.asarray(lvl)[y0:y1, x0:x1]
+
+
+def plates(x0, x1, y0, y1, size, draw):
+    """Deck plates: draw(px, py) paints the size x size plate at px, py. Like a plank, render() lights a plate
+    whole, at its middle, with no brushwork: the light steps from plate to plate."""
+    for py in range(y0, y1, size):
+        for px in range(x0, x1, size):
+            draw(px, py)
+            rows, cols = slice(py, min(py + size, y1)), slice(px, min(px + size, x1))
+            plank['id'][rows, cols] = len(SHIFT); plank['top'][rows, cols] = py + size // 2 - 3
+            SHIFT.append(0)
     plank['mat'][y0:y1, x0:x1] = np.asarray(mat)[y0:y1, x0:x1]; plank['lvl'][y0:y1, x0:x1] = np.asarray(lvl)[y0:y1, x0:x1]
 
 
@@ -591,11 +604,12 @@ def render():
     on = (plank['id'] > 0) & (plank['mat'] == np.asarray(mat)) & (plank['lvl'] == np.asarray(lvl))
     xs = np.clip(np.arange(W) + np.array(SHIFT)[plank['id']], 0, W - 1)
     lit = np.where(on, np.clip(plank['top'] + 3, 0, H - 1) * W + xs, np.arange(W * H).reshape(H, W)).ravel().tolist()
+    on = on.ravel().tolist()
     out = []
     for i in range(W * H):
         m, v = M[i], V[i] / U
         if m and m < FLAT:
-            v += total[lit[i]] - S[i] / 255 + (N[i] - 128) / 128 * (.3 if m == WALL else 0 if m in (FLOOR, WOOD) else .12)   # brushwork on the plaster; planks stay whole
+            v += total[lit[i]] - S[i] / 255 + (N[i] - 128) / 128 * (0 if on[i] or m in (FLOOR, WOOD) else .3 if m == WALL else .12)   # brushwork on the plaster; planks and plates stay whole
         out.append(rgb(RAMPS[m % FLAT][max(0, min(6, int(v + .5)))] if m else K))
     im = Image.new('RGB', (W, H)); im.putdata(out)
     im.light = total

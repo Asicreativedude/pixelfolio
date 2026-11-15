@@ -1,9 +1,12 @@
 # The Hall: the room the world starts in, 1280x736 px (40x23 tiles of 32 px, one art pixel per game pixel), by day
 # and in the evening. The style, the palette and the primitives are draw.py's (read its header first), and how a
 # room is laid out on the tile grid is the studio's (rooms/studio.py).
+# Its look is atomic-age retro-futurist, to sit with the hologram: a deck of steel plates, a two-tone enamel wall
+# with pipes and portholes, the top doorway a bulkhead, terminals, a jukebox, a soda machine, lockers, vinyl and
+# chrome. Nothing in it is any game's own (no maker's names, marks or mascots).
 # What the Hall keeps from the old one (Hall.aseprite): its size, the four doorways (top and bottom in columns 18
-# to 21, left in rows 14 to 17, right in rows 3 to 6), the two lounges by the right wall, the carpet that says
-# CHECKPOINT REACHED, the hologram in the middle and where its cast stands. The back wall is three rows high, so
+# to 21, left in rows 14 to 17, right in rows 3 to 6), the two lounges by the right wall, the plate (once a carpet)
+# that says CHECKPOINT REACHED, the hologram in the middle and where its cast stands. The back wall is three rows high, so
 # the first row anyone stands on is row 3, as before.
 # Its furniture is its own: nothing here is the studio's drawing (#68: the test rooms shared a desk and plants).
 # Rebuild: python3 -I art/room.py hall
@@ -49,98 +52,585 @@ TEXT = ('.####..#..##.#####...####.##..#..####....####..#..#...#.#######......##
 
 
 # --- room shell -----------------------------------------------------------------------------------------------
+def deck(x0, x1, y0, y1, rnd):
+    """Deck plates, 32 px, sage-grey enamel: a soft seam, a rivet each corner, some with tread, a few patched in
+    bare steel or rust-brown, the odd oil stain. Each plate is lit whole (m.plates)."""
+    def plate(px, py):
+        k = rnd.random()
+        mt, l = (CARD, 2.4) if k < .015 else (METAL, 3.1) if k < .04 else (WALL, 3 + rnd.choice((0, 0, 0, .12)))
+        R(px, py, 32, 32, mt, l); R(px, py, 32, 1, mt, l + .7); R(px, py, 1, 32, mt, l + .5); R(px, py + 31, 32, 1, mt, l - .8); R(px + 31, py, 1, 32, mt, l - .8)
+        for rx, ry in ((3, 3), (27, 3), (3, 27), (27, 27)):
+            R(px + rx, py + ry, 2, 1, mt, l + 1); R(px + rx, py + ry + 1, 2, 1, mt, l - .9)
+        if mt == WALL and rnd.random() < .3:
+            for i in range(7, 25, 4):
+                for j in range(7, 25, 4):
+                    R(px + i + (j // 4) % 2 * 2, py + j, 2, 1, mt, l + .6)
+        if rnd.random() < .06:
+            ox, oy = px + rnd.randrange(4, 14), py + rnd.randrange(6, 18)
+            E(ox, oy, rnd.randrange(10, 16), rnd.randrange(4, 6), mt, l - .7); R(ox + 3, oy + 1, 3, 1, mt, l + .6)
+    m.plates(x0, x1, y0, y1, 32, plate)
+
+
+def worn(pts, w, rnd):
+    """A way everyone walks, rubbed shiny: light scuffs along it."""
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        n = max(abs(bx - ax), abs(by - ay)) // 3
+        for i in range(n):
+            x, y = ax + (bx - ax) * i // n, ay + (by - ay) * i // n
+            T(x - w // 2 + rnd.randrange(-3, 4), y + rnd.randrange(-2, 3), rnd.randrange(w // 2, w), 1, .45)
+
+
+def stripes(x, y, w, h, l=4.4):
+    """Hazard stripes, amber on the dark, cut square to x, y, w, h."""
+    R(x, y, w, h, METAL, 1.2)
+    for j in range(h):
+        for i in range(w):
+            if (i + j) % 12 < 6:
+                R(x + i, y + j, 1, 1, FLOOR, l)
+
+
 def wall(x0, x1, rnd):
-    """A stretch of the back wall: plaster in patches, a picture rail, a dado, the skirting."""
+    """A stretch of the back wall, two-tone: cream enamel panels above a chrome strip, mint below, riveted seams,
+    rust running down, a kick plate, a red pipe and a steel one under the ceiling."""
     w = x1 - x0
-    R(x0, 8, w, 88, WALL, 3.1)
-    for _ in range(w // 7):
-        pw = rnd.randrange(10, 36)
-        E(rnd.randrange(x0, x1 - pw), rnd.randrange(4, 60), pw, rnd.randrange(4, 12), WALL, 3.1 + rnd.choice((-.45, -.3, .3, .45)))
-    for _ in range(w // 160):
-        E(rnd.randrange(x0, x1 - 40), rnd.randrange(6, 50), rnd.randrange(24, 44), rnd.randrange(12, 20), WALL, 2.6)      # damp
-    for _ in range(w // 120):
-        cx, cy = rnd.randrange(x0 + 4, x1 - 8), rnd.randrange(10, 56)
-        L([(cx, cy), (cx + 2, cy + 6), (cx - 1, cy + 11), (cx + 3, cy + 17)], WALL, 1.6)                                 # cracks
-    R(x0, 8, w, 2, WALL, 2)                                                                     # under the ceiling
-    R(x0, 22, w, 3, DESK, 3.6); R(x0, 22, w, 1, DESK, 4.4); R(x0, 24, w, 1, DESK, 2.2)          # picture rail
-    R(x0, 75, w, 11, WALL, 2.7); R(x0, 74, w, 1, WALL, 4); R(x0, 75, w, 1, WALL, 2)            # dado
-    for x in range(x0 + 4, x1 - 2, 9):
-        R(x + rnd.randrange(3), 77 + rnd.randrange(8), 2, 1, WALL, 2.3)                         # scuffs
-    R(x0, 86, w, 10, DESK, 2.8); R(x0, 86, w, 1, DESK, 4); R(x0, 94, w, 2, DESK, 1.6)          # skirting
+    R(x0, 8, w, 88, PAPER, 3.9)
+    for sx in range(x0 + 24, x1, 48):
+        R(sx, 8, 1, 88, PAPER, 2.8); R(sx + 1, 8, 1, 88, PAPER, 4.6)
+        for ry in range(30, 54, 8):
+            R(sx + 4, ry, 1, 1, PAPER, 2.6); R(sx - 3, ry, 1, 1, PAPER, 2.6)
+    R(x0, 58, w, 28, TEAL, 3.2); R(x0, 58, w, 1, TEAL, 2)
+    for sx in range(x0 + 24, x1, 48):
+        R(sx, 58, 1, 28, TEAL, 2.2)
+    for _ in range(w // 40):
+        rx = rnd.randrange(x0, x1 - 16)
+        E(rx, rnd.randrange(60, 80), rnd.randrange(8, 18), rnd.randrange(3, 6), CARD, 2.6)                   # rust
+        if rnd.random() < .4:
+            R(rx + 4, 58, 1, rnd.randrange(6, 20), CARD, 2.8)                                                  # a run of it
+    R(x0, 55, w, 3, METAL, 4.6); R(x0, 55, w, 1, PAPER, 5.6); R(x0, 57, w, 1, METAL, 2.6)                     # chrome strip
+    R(x0, 86, w, 10, METAL, 2.2); R(x0, 86, w, 1, METAL, 4); R(x0, 94, w, 2, METAL, 1.4)                     # kick plate
+    for py, c, l in ((11, METAL, 3.4), (18, RED, 3.2)):                                                         # pipes
+        R(x0, py, w, 5, c, l); R(x0, py, w, 1, c, l + 1.2); R(x0, py + 4, w, 1, c, l - 1.2)
+        for bx in range(x0 + 20, x1 - 4, 96):
+            R(bx, py - 1, 4, 7, METAL, 2.6); R(bx, py - 1, 4, 1, METAL, 3.8)
 
 
 def shell():
     rnd = random.Random(3)
-    fw = X1 - X0
-    m.boards(X0, X1, Y0, Y1, rnd)
+    deck(X0, X1, Y0, Y1, rnd)
+    x0, x1 = DOOR_X
     with thing():                               # the back wall is a thing: no one stands in row 2
-        wall(X0, DOOR_X[0] - 8, rnd); wall(DOOR_X[1] + 8, X1, rnd)
-        for jx, l in ((DOOR_X[0] - 8, 3.2), (DOOR_X[1], 2.6)):                                  # the doorway's jambs
-            R(jx, 8, 8, 88, DESK, l); R(jx, 8, 8, 1, DESK, l + 1); R(jx + (7 if jx < 640 else 0), 8, 1, 88, DESK, l - 1)
-        R(DOOR_X[0] - 8, 8, 144, 8, DESK, 3.6); R(DOOR_X[0] - 8, 15, 144, 1, DESK, 2.2)          # the lintel
+        wall(X0, x0 - 10, rnd); wall(x1 + 10, X1, rnd)
+        for jx in (x0 - 10, x1):                                                                   # the bulkhead's frame
+            R(jx, 8, 10, 88, METAL, 2.8); R(jx, 8, 10, 1, METAL, 4); R(jx + (9 if jx < 640 else 0), 8, 1, 88, METAL, 1.8)
+            for ry in range(16, 90, 9):
+                R(jx + 4, ry, 2, 2, METAL, 4.2); R(jx + 5, ry + 1, 1, 1, METAL, 1.6)
+        with prop(cast=(3, 4)):                                                                    # its hatch, swung open
+            E(x1 + 12, 20, 30, 72, METAL, 3.2); E(x1 + 15, 24, 22, 64, METAL, 2.6); E(x1 + 18, 28, 4, 56, METAL, 3.6)
+            E(x1 + 17, 46, 16, 16, RED, 3.4); E(x1 + 20, 49, 10, 10, METAL, 2.2)
+            R(x1 + 24, 47, 2, 14, RED, 4); R(x1 + 18, 53, 14, 2, RED, 4)
     corridor()
     R(0, 0, W, 8, 0, 0); R(0, 0, X0, H, 0, 0); R(X1, 0, W - X1, H, 0, 0); R(0, Y1, W, H - Y1, 0, 0)
-    # the side and bottom doorways: the boards run on through the gap, a sill, the wall's ends either side
-    m.boards(0, X0, DOOR_LEFT[0], DOOR_LEFT[1], rnd); m.boards(X1, W, DOOR_RIGHT[0], DOOR_RIGHT[1], rnd)
-    m.boards(DOOR_X[0], DOOR_X[1], Y1, H, rnd)
-    for x, (y0, y1), sill in ((0, DOOR_LEFT, X0 - 1), (X1, DOOR_RIGHT, X1)):
-        R(x, y0 - 6, X0, 6, DESK, 3.4); R(x, y0 - 6, X0, 1, DESK, 4.4); R(x, y1, X0, 6, DESK, 2.4)
-        R(sill, y0, 1, y1 - y0, FLOOR, 1.5)
-    R(DOOR_X[0] - 8, Y1, 8, H - Y1, DESK, 3); R(DOOR_X[1], Y1, 8, H - Y1, DESK, 2.4); R(DOOR_X[0], Y1, DOOR_X[1] - DOOR_X[0], 1, FLOOR, 1.5)
-    T(X0, Y0, fw, 3, -1)                        # the wall's shadow
+    # the side and bottom doorways: the deck runs on through the gap, the wall's ends either side
+    m.plates(0, X0, DOOR_LEFT[0], DOOR_LEFT[1], 16, lambda px, py: (R(px, py, 16, 16, WALL, 2.8), R(px, py + 15, 16, 1, WALL, 2)))
+    m.plates(X1, W, DOOR_RIGHT[0], DOOR_RIGHT[1], 16, lambda px, py: (R(px, py, 16, 16, WALL, 2.8), R(px, py + 15, 16, 1, WALL, 2)))
+    m.plates(x0, x1, Y1, H, 16, lambda px, py: (R(px, py, 16, 16, WALL, 2.8), R(px + 15, py, 1, 16, WALL, 2)))
+    for x, (y0, y1) in ((0, DOOR_LEFT), (X1, DOOR_RIGHT)):
+        R(x, y0 - 6, X0, 6, METAL, 3.4); R(x, y0 - 6, X0, 1, METAL, 4.4); R(x, y1, X0, 6, METAL, 2.4)
+    R(x0 - 8, Y1, 8, H - Y1, METAL, 3); R(x1, Y1, 8, H - Y1, METAL, 2.4)
+    side_pipes(18, Y0, DOOR_LEFT[0] - 8); side_pipes(18, DOOR_LEFT[1] + 8, Y1, valve=False)
+    T(X0, Y0, X1 - X0, 3, -1)                    # the wall's shadow
 
 
 def corridor():
-    """Through the top doorway: the corridor's boards going away, its far wall and the light of the room beyond."""
+    """Through the top doorway: an arch, the corridor's deck going away, a closed bulkhead at its end, lit."""
     x0, x1 = DOOR_X
     rnd = random.Random(21)
-    m.boards(x0, x1, 32, Y0, rnd)
-    R(x0, 16, x1 - x0, 16, WALL, 2.4); R(x0, 30, x1 - x0, 2, DESK, 1.8)
-    with prop(cast=(1, 2)):                     # the far door, ajar: light round it
-        R(x0 + 46, 16, 36, 15, DESK, 2.6); R(x0 + 49, 18, 30, 13, DESK, 1.6); R(x0 + 76, 18, 3, 13, FLOOR + FLAT, 5)
-    R(x0 + 2, 32, 2, Y0 - 32, DESK, 1.6); R(x1 - 4, 32, 2, Y0 - 32, DESK, 1.6)               # the corridor's skirting
+    m.plates(x0, x1, 32, Y0, 16, lambda px, py: (R(px, py, 16, 16, WALL, 2.7 + rnd.choice((0, .2))), R(px, py + 15, 16, 1, WALL, 1.8)))
+    R(x0, 12, x1 - x0, 20, TEAL, 3.4)
+    for i in range(4):
+        R(x0, 15 + 4 * i, x1 - x0, 1, TEAL, 2.4)
+    with prop(cast=(1, 2)):                     # the far bulkhead, shut
+        R(x0 + 46, 12, 36, 19, METAL, 2.6); R(x0 + 48, 14, 32, 17, METAL, 3.2); E(x0 + 57, 16, 14, 12, RED, 3.4); E(x0 + 60, 19, 8, 6, METAL, 2)
+    cx, cy, rx, ry = (x0 + x1) / 2, 44, (x1 - x0) / 2 - 2, 36
+    for y in range(8, 44):                      # the arch: the frame closes over the top corners
+        for x in range(x0, x1):
+            if ((x + .5 - cx) / rx) ** 2 + ((y + .5 - cy) / ry) ** 2 > 1:
+                R(x, y, 1, 1, METAL, 2.8)
+    R(x0 + 46, 8, 36, 7, METAL, 1.4); R(x0 + 48, 9, 32, 4, FLOOR + FLAT, 5)                   # a lit sign over it
+    R(x0 + 2, 32, 2, Y0 - 32, METAL, 1.6); R(x1 - 4, 32, 2, Y0 - 32, METAL, 1.6)
+
+
+def side_pipes(x, y0, y1, valve=True):
+    """Pipes down the left wall, a steel run and a red one, bracketed; a valve wheel and a gauge on one stretch."""
+    for px, c, l in ((x, METAL, 3.2), (x + 7, RED, 3)):
+        R(px, y0, 5, y1 - y0, c, l); R(px, y0, 1, y1 - y0, c, l + 1.3); R(px + 4, y0, 1, y1 - y0, c, l - 1.2)
+        for by in range(y0 + 20, y1 - 4, 64):
+            R(px - 1, by, 7, 4, METAL, 2.4); R(px - 1, by, 7, 1, METAL, 3.6)
+    if valve:
+        cy = y0 + 70
+        E(x + 5, cy - 7, 14, 14, RED, 3.6); E(x + 8, cy - 4, 8, 8, RED, 1.6)
+        L([(x + 12, cy - 6), (x + 12, cy + 6)], RED, 3.6); L([(x + 6, cy), (x + 18, cy)], RED, 3.6)
+        E(x - 1, cy + 160, 12, 12, METAL, 3.4); E(x, cy + 161, 10, 10, PAPER, 5); L([(x + 5, cy + 166), (x + 8, cy + 163)], RED, 3)
 
 
 # --- on the wall ----------------------------------------------------------------------------------------------
-def sky(x, y, w, h, town):
-    """Glass: the sky in bands and a street's roofs, by day or at dusk. town: (x, top, width, tone) a building."""
-    bands = (((0, .3, TEAL, 3), (.3, .25, TEAL, 4), (.55, .2, TEAL, 5), (.75, .25, FLOOR, 5)) if not m.EVE else
-             ((0, .3, METAL, 1), (.3, .2, TEAL, 1), (.5, .2, TEAL, 2), (.7, .15, RED, 2), (.85, .15, RED, 3)))
-    for f, g, c, l in bands:
-        R(x, y + round(f * h), w, min(round(g * h) + 1, h - round(f * h)), c + FLAT, l)
-    for bx, top, bw, tone in town:
-        R(x + bx, y + top, bw, h - top, METAL + FLAT, tone - m.EVE)
-        for wy in range(top + 2, h - 1, 3 - m.EVE):                     # more windows are lit at dusk
-            if (wy + bx) % 2:
-                R(x + bx + 1 + (wy % 2) * 2, y + wy, 1, 1, FLOOR + FLAT, 5)
-
-
-def hall_window(x, y, town, curtain=RED, cl=3.2):
-    """A tall sash window, two panes over two, with a curtain tied back on each side. 52 x 62, the sill included."""
+def porthole(cx, cy, r=22):
+    """A round window in a bolted ring: the sky and the town's roofs, by day or at dusk."""
     with prop(cast=(2, 3)):
-        R(x, y, 52, 58, PAPER, 4.2); R(x + 50, y, 2, 58, PAPER, 3)
-        sky(x + 3, y + 3, 45, 52, town)
+        E(cx - r - 5, cy - r - 5, 2 * r + 10, 2 * r + 10, METAL, 3.4); E(cx - r - 3, cy - r - 3, 2 * r + 6, 2 * r + 6, METAL, 4.2)
+        E(cx - r, cy - r, 2 * r, 2 * r, TEAL + FLAT, 2 if m.EVE else 4)
+        E(cx - r, cy - 2, 2 * r, r + 2, (RED if m.EVE else FLOOR) + FLAT, 3 if m.EVE else 5)
+        for bx, top, bw in ((-r + 4, 4, 6), (-r + 12, -2, 5), (-2, 6, 8), (8, 0, 6), (15, 8, 5)):
+            R(cx + bx, cy + top, bw, r - top, METAL + FLAT, 1)
+            if m.EVE:
+                R(cx + bx + 2, cy + top + 3, 1, 1, FLOOR + FLAT, 5)
         if not m.EVE:
-            E(x + 33, y + 10, 8, 8, FLOOR + FLAT, 6)                    # the sun
-        R(x + 24, y + 3, 3, 52, PAPER, 4.4); R(x + 26, y + 3, 1, 52, PAPER, 3.2)                  # the bars
-        R(x + 3, y + 27, 45, 3, PAPER, 4.6); R(x + 3, y + 29, 45, 1, PAPER, 3.2)
-        R(x + 10, y + 31, 6, 1, PAPER, 4.8); R(x + 35, y + 31, 6, 1, PAPER, 4.8)                  # the lifts
-    with prop(cast=(2, 3)):
-        R(x - 4, y + 58, 60, 4, PAPER, 4.4); R(x - 4, y + 61, 60, 1, PAPER, 2.4)                  # the sill
+            E(cx + 6, cy - 14, 6, 6, PAPER + FLAT, 6)                                            # the sun
+        for i in range(12):
+            a = i * math.pi / 6
+            R(round(cx + (r + 2) * math.cos(a)), round(cy + (r + 2) * math.sin(a)), 1, 1, METAL, 1.6)
+        L([(cx - 12, cy - 10), (cx - 4, cy - 16)], PAPER + FLAT, 6)
+
+
+def sconce(x, y):
+    """A caged bulkhead light by the doorway: a steel plate, a glass dome glowing behind bars. x, y: the plate."""
     with prop(cast=(1, 2)):
-        R(x - 12, y - 4, 76, 2, METAL, 3); R(x - 13, y - 5, 3, 4, METAL, 4.2); R(x + 62, y - 5, 3, 4, METAL, 4.2)   # the rod
-    for side in (1, -1):
-        mid = x + 26
-        fx = (lambda px: px) if side == 1 else (lambda px: 2 * mid - px)
-        with prop(cast=(2, 3)):
-            G([(fx(x - 12), y - 3), (fx(x + 5), y - 3), (fx(x + 3), y + 16), (fx(x - 2), y + 30), (fx(x + 1), y + 46),
-               (fx(x + 3), y + 68), (fx(x - 12), y + 68)], curtain, cl)
-            for px, top in ((x - 8, -2), (x - 4, 32), (x + 1, -2)):
-                L([(fx(px), y + top), (fx(px + (1 if top else 0)), y + (24 if top < 0 else 66))], curtain, cl - .9)
-            L([(fx(x - 11), y - 2), (fx(x - 11), y + 66)], curtain, cl + .8)
-            R(min(fx(x - 7), fx(x - 1)), y + 28, 7, 3, FLOOR, 4.6)                                  # the tie
+        R(x - 2, y - 14, 10, 18, METAL, 3.2); R(x - 2, y - 14, 10, 1, METAL, 4.2)
+        E(x - 4, y - 12, 14, 14, FLOOR + FLAT, 6); E(x - 1, y - 9, 6, 6, PAPER + FLAT, 6)
+        for bx in (-3, 2, 7):
+            R(x + bx, y - 12, 1, 14, METAL, 2.2)
+        R(x - 4, y - 6, 14, 1, METAL, 2.2)
+    light(1 if m.EVE else .5, 2.5, [(x - 8, y - 18), (x + 14, y - 18), (x + 18, y + 4), (x + 3, y + 14), (x - 12, y + 4)])
+    if m.EVE:
+        light(.7, 5, [(x - 20, y - 14), (x + 26, y - 16), (x + 34, y + 30), (x + 3, y + 46), (x - 28, y + 28)])
+        light(.6, 6, [(x - 14, y + 70), (x + 22, y + 66), (x + 36, y + 110), (x - 2, y + 128), (x - 30, y + 104)])
 
 
+def posters(x, y):
+    """Posters taped up close together: a rocket climbing, an atom, a ringed planet over a dome town. 84 x 54."""
+    with prop(cast=(1, 2), rim=0):
+        R(x, y, 26, 40, TEAL, 3.6); R(x + 1, y + 1, 24, 38, TEAL, 4.2)
+        for i in range(5):
+            R(x + 3 + 4 * i, y + 30 - i * 3, 2, 1, PAPER, 5)                                    # its trail
+        G([(x + 13, y + 6), (x + 17, y + 14), (x + 17, y + 26), (x + 9, y + 26), (x + 9, y + 14)], PAPER, 5)
+        R(x + 7, y + 22, 3, 6, RED, 4); R(x + 16, y + 22, 3, 6, RED, 4); R(x + 11, y + 26, 4, 4, FLOOR, 5.4); E(x + 11, y + 13, 4, 4, RED, 4)
+        R(x + 3, y + 33, 20, 2, PAPER, 5); R(x + 6, y + 36, 14, 1, PAPER, 4.6)
+    with prop(cast=(1, 2), rim=0):
+        R(x + 29, y + 4, 24, 30, PAPER, 4.8); R(x + 30, y + 5, 22, 28, PAPER, 5.2)
+        orbit(x + 41, y + 17, 9, 4, 0, RED, 3.6); orbit(x + 41, y + 17, 9, 4, 1, TEAL, 3.4); orbit(x + 41, y + 17, 9, 4, 2, METAL, 2.6)
+        E(x + 39, y + 15, 5, 5, RED, 4.2); R(x + 32, y + 29, 18, 2, METAL, 2.4)
+    with prop(cast=(1, 2), rim=0):
+        R(x + 56, y + 2, 28, 34, RED, 3); R(x + 57, y + 3, 26, 32, METAL + FLAT, 1)
+        for sx, sy in ((60, 6), (78, 9), (66, 12), (81, 4)):
+            R(x + sx, y + sy, 1, 1, PAPER + FLAT, 6)
+        E(x + 62, y + 9, 14, 14, FLOOR, 4.6); L([(x + 58, y + 18), (x + 80, y + 13)], PAPER, 5)
+        E(x + 58, y + 26, 10, 10, TEAL, 3.4); E(x + 70, y + 24, 12, 12, TEAL, 3.8); R(x + 57, y + 31, 26, 4, TEAL, 2.6)
+    for tx, ty in ((-1, -1), (22, -1), (54, 0), (80, 0), (27, 32)):
+        R(x + tx, y + ty, 5, 3, PAPER, 5.4)
+
+
+def orbit(cx, cy, rx, ry, k, c, l):
+    """One of an atom's three orbits, the k-th turned by 60 degrees."""
+    t = k * math.pi / 3
+    L([(round(cx + rx * math.cos(a) * math.cos(t) - ry * math.sin(a) * math.sin(t)),
+        round(cy + rx * math.cos(a) * math.sin(t) + ry * math.sin(a) * math.cos(t))) for a in [i * math.pi / 10 for i in range(21)]], c, l)
+
+
+def starburst(cx, cy):
+    """An atomic clock: brass rays round a cream face, two hands."""
+    with prop(cast=(1, 2)):
+        for i in range(12):
+            a = i * math.pi / 6
+            L([(cx, cy), (round(cx + 15 * math.cos(a)), round(cy + 15 * math.sin(a)))], FLOOR, 4.4 + (i % 2) * .6)
+            E(round(cx + 15 * math.cos(a)) - 1, round(cy + 15 * math.sin(a)) - 1, 3, 3, FLOOR, 5.2)
+        E(cx - 7, cy - 7, 14, 14, PAPER, 5); L([(cx, cy), (cx, cy - 5)], METAL, 1.4); L([(cx, cy), (cx + 4, cy + 2)], METAL, 1.4)
+
+
+def intercom(x, y):
+    """A wall panel by the corner: a speaker grille, two gauges, a red call button, a green lamp. 30 x 50."""
+    with prop(cast=(2, 3)):
+        R(x, y, 30, 50, METAL, 3.2); R(x, y, 30, 2, METAL, 4.4); R(x + 28, y, 2, 50, METAL, 2.2)
+        for gy in range(y + 6, y + 22, 3):
+            R(x + 5, gy, 20, 1, METAL, 1.6)
+        for gx in (5, 16):
+            E(x + gx, y + 26, 10, 10, PAPER, 5); L([(x + gx + 5, y + 31), (x + gx + 7 + (gx > 10) * -3, y + 28)], RED, 3)
+        E(x + 6, y + 39, 7, 7, RED, 4); R(x + 8, y + 40, 2, 1, RED, 5.4); R(x + 20, y + 41, 4, 3, GREEN + FLAT, 5)
+        L([(x + 15, y + 50), (x + 15, y + 56), (x + 22, y + 60)], METAL, 1.6)                  # its handset cord
+
+
+# --- furniture ------------------------------------------------------------------------------------------------
+def wall_bench(x, y):
+    """A bench along the wall under the porthole: a channel-tufted teal vinyl back, a seat, chrome legs, a
+    magazine left on it. 72 x 39."""
+    with prop(cast=(3, 4)):
+        R(x, y + 2, 72, 16, TEAL, 3.2); R(x, y + 2, 72, 1, TEAL, 4.2)
+        for i in range(7):
+            R(x + 5 + 10 * i, y + 4, 1, 13, TEAL, 2.2); R(x + 6 + 10 * i, y + 4, 1, 13, TEAL, 4)
+        R(x - 2, y + 18, 76, 10, TEAL, 3.9); R(x - 2, y + 18, 76, 1, TEAL, 4.8); R(x - 2, y + 27, 76, 3, TEAL, 2.4)
+        R(x - 2, y + 26, 76, 1, PAPER, 5.6)
+        for lx in (4, 64):
+            R(x + lx, y + 30, 2, 9, METAL, 4.6); R(x + lx - 2, y + 38, 6, 1, METAL, 3.4)
+    with prop(cast=(1, 1), rim=0):
+        G([(x + 40, y + 19), (x + 56, y + 18), (x + 57, y + 25), (x + 41, y + 26)], RED, 3.8); R(x + 43, y + 20, 8, 3, PAPER, 5)
+
+
+def terminal(x, y):
+    """A bank of beige terminals: two rounded screens with green lines, a long desk of keys and lamps, a stool's
+    worth of cable under it. x, y: the desk's back edge. 104 x 60."""
+    with prop(cast=(3, 4)):
+        R(x + 4, y + 26, 4, 34, METAL, 2.4); R(x + 96, y + 26, 4, 34, METAL, 1.8)
+        R(x, y + 18, 104, 10, CARD, 3.6); R(x, y + 18, 104, 2, CARD, 4.6); R(x + 100, y + 18, 4, 10, CARD, 2.6); R(x, y + 27, 104, 1, CARD, 2.2)
+        for i in range(8):
+            R(x + 6 + 12 * i, y + 21, 8, 2, CARD, 4.6)
+            R(x + 6 + 12 * i, y + 24, 3, 2, (RED, FLOOR, TEAL, GREEN)[i % 4] + FLAT, 4 + (i % 2))
+        for k in range(2):
+            sx = x + 6 + 50 * k
+            R(sx, y - 14, 42, 32, CARD, 4.1); R(sx + 38, y - 14, 4, 32, CARD, 3); R(sx, y - 14, 42, 2, CARD, 5)
+            E(sx + 4, y - 10, 30, 22, METAL, 1); E(sx + 5, y - 9, 28, 20, GREEN + FLAT, 2.6)
+            for j in range(4):
+                R(sx + 9, y - 5 + 4 * j, 6 + (j * 7 + k * 5) % 13, 1, GREEN + FLAT, 5)
+            R(sx + 34, y + 10, 2, 2, RED + FLAT, 5)
+    T(x + 8, y + 28, 88, 30, -1.2)
+    with prop(cast=(1, 1)):
+        L([(x + 60, y + 28), (x + 58, y + 50), (x + 70, y + 58)], METAL, 1.2, 2)
+    for k in range(2):
+        sx = x + 6 + 50 * k
+        light(.7 if m.EVE else .2, 3, [(sx, y - 14), (sx + 40, y - 14), (sx + 46, y + 30), (sx - 4, y + 30)])
+    if m.EVE:
+        light(.6, 6, [(x - 10, y + 20), (x + 114, y + 20), (x + 130, y + 90), (x - 26, y + 90)])
+
+
+def extinguisher(x, y):
+    """A fire extinguisher on its bracket, a hose curled round it. x, y: its foot."""
+    with prop(cast=(2, 3)):
+        R(x - 2, y - 30, 14, 3, METAL, 2.6)
+        R(x, y - 26, 10, 26, RED, 3.6); R(x, y - 26, 3, 26, RED, 4.6); R(x + 8, y - 26, 2, 26, RED, 2.4)
+        E(x, y - 30, 10, 6, RED, 4); R(x + 3, y - 34, 4, 5, METAL, 3.8); R(x + 1, y - 18, 8, 6, PAPER, 5)
+        L([(x + 7, y - 33), (x + 13, y - 30), (x + 13, y - 10), (x + 10, y - 4)], METAL, 1.4)
+
+
+def footlocker(x, y):
+    """A steel footlocker under the posters: ribbed, bolted corners, a hasp; a folded blanket and magazines on
+    the lid. 64 x 32."""
+    with prop(cast=(3, 4)):
+        R(x, y, 64, 9, GREEN, 3.4); R(x, y + 9, 64, 21, GREEN, 2.6); R(x + 61, y + 9, 3, 21, GREEN, 1.8)
+        R(x, y + 9, 64, 1, GREEN, 1.6)
+        for ry in (14, 20, 26):
+            R(x + 3, ry + y, 58, 1, GREEN, 3.2)
+        for bx in (0, 58):
+            R(x + bx, y, 6, 30, METAL, 3.6); R(x + bx, y, 6, 1, METAL, 4.6)
+        R(x + 28, y + 8, 8, 8, METAL, 4.2); R(x + 31, y + 12, 2, 2, METAL, 1.4)
+        R(x + 2, y + 30, 5, 2, METAL, 1.6); R(x + 57, y + 30, 5, 2, METAL, 1.6)
+    with prop(cast=(2, 2)):
+        R(x + 8, y - 4, 26, 10, RED, 3.6); R(x + 8, y + 4, 26, 2, RED, 2.6)
+        for i in range(3):
+            R(x + 11 + 8 * i, y - 4, 3, 10, PAPER, 4.8)
+    with prop(cast=(1, 2)):
+        for i, (c, w) in enumerate(((PAPER, 18), (TEAL, 16), (RED, 17))):
+            R(x + 40 + i % 2, y + 3 - 3 * i, w, 3, c, 4); R(x + 40 + i % 2, y + 5 - 3 * i, w, 1, c, 2.8)
+
+
+def lockers(x, y, n=2, ajar=1):
+    """A row of steel lockers by the left wall: vents, a handle, a name card each; one ajar on a red jacket."""
+    with prop(cast=(3, 4)):
+        for i in range(n):
+            lx = x + 22 * i
+            R(lx, y, 22, 70, TEAL, 3); R(lx, y, 22, 2, TEAL, 4.2); R(lx + 21, y, 1, 70, TEAL, 1.8); R(lx, y + 68, 22, 2, TEAL, 1.8)
+            for v in range(4):
+                R(lx + 5, y + 6 + 3 * v, 12, 1, TEAL, 1.6)
+            R(lx + 16, y + 32, 2, 8, METAL, 4.4); R(lx + 7, y + 22, 8, 4, PAPER, 4.8)
+            if i == ajar:
+                R(lx + 1, y + 2, 20, 66, METAL, .8)
+                G([(lx + 4, y + 8), (lx + 16, y + 8), (lx + 18, y + 40), (lx + 2, y + 40)], RED, 2.8)
+                G([(lx + 20, y + 2), (lx + 28, y + 6), (lx + 28, y + 66), (lx + 20, y + 70)], TEAL, 3.6)
+        R(x, y + 70, 22 * n, 3, METAL, 1.4)
+    with prop(cast=(1, 2)):                                     # a hard hat left on top
+        E(x + 4, y - 7, 16, 9, FLOOR, 4.4); R(x + 2, y - 1, 20, 2, FLOOR, 3.6); E(x + 7, y - 6, 5, 3, FLOOR, 5.4)
+
+
+def jukebox(x, y):
+    """An arched jukebox: bands of coloured light round the record window, a chrome grille. 44 x 74."""
+    with prop(cast=(3, 4)):
+        R(x, y + 18, 44, 56, DESK, 2.8); E(x, y, 44, 40, DESK, 3.2); R(x + 40, y + 18, 4, 56, DESK, 2)
+        E(x + 3, y + 3, 38, 34, FLOOR + FLAT, 5); R(x + 3, y + 20, 38, 50, FLOOR + FLAT, 5)
+        E(x + 6, y + 6, 32, 28, RED + FLAT, 4); R(x + 6, y + 20, 32, 48, RED + FLAT, 4)
+        E(x + 9, y + 9, 26, 22, TEAL + FLAT, 4.4); R(x + 9, y + 20, 26, 46, TEAL + FLAT, 4.4)
+        E(x + 12, y + 12, 20, 16, METAL, 1.4); E(x + 15, y + 15, 14, 10, METAL + FLAT, 1); E(x + 19, y + 18, 6, 4, RED + FLAT, 3)
+        R(x + 12, y + 30, 20, 14, PAPER, 4.6)
+        for j in range(3):
+            R(x + 14, y + 32 + 4 * j, 16, 1, METAL, 2.4)
+        R(x + 12, y + 46, 20, 18, METAL, 3.6)
+        for gx in range(x + 13, x + 31, 3):
+            R(gx, y + 47, 1, 16, METAL, 1.6)
+        R(x + 2, y + 72, 6, 2, METAL, 1.6); R(x + 36, y + 72, 6, 2, METAL, 1.6)
+    light(1 if m.EVE else .4, 5, [(x - 10, y + 4), (x + 54, y + 4), (x + 70, y + 110), (x - 26, y + 110)])
+    if m.EVE:
+        light(.6, 9, [(x - 40, y + 60), (x + 84, y + 60), (x + 110, y + 170), (x - 60, y + 170)])
+
+
+def vending(x, y):
+    """A soda machine: a rounded red top with a bottle cap on it (no maker's name), the bottles lit behind
+    glass, a coin slot. 40 x 76."""
+    with prop(cast=(3, 4)):
+        R(x, y + 8, 40, 66, RED, 3.4); E(x, y, 40, 18, RED, 3.8); R(x + 36, y + 8, 4, 66, RED, 2.4)
+        R(x + 4, y + 14, 24, 40, PAPER + FLAT, 4.6)
+        for r in range(3):
+            for c in range(4):
+                R(x + 6 + 6 * c, y + 17 + 12 * r, 3, 9, TEAL + FLAT, 4 + (c + r) % 2); R(x + 7 + 6 * c, y + 15 + 12 * r, 1, 2, TEAL + FLAT, 3)
+        E(x + 12, y + 2, 16, 10, PAPER, 5); E(x + 15, y + 4, 10, 6, RED, 4.2)
+        R(x + 31, y + 18, 3, 8, METAL, 1.6); R(x + 31, y + 30, 3, 3, FLOOR, 5)
+        R(x + 4, y + 60, 26, 8, METAL, 1.2); R(x + 4, y + 74, 4, 2, METAL, 1.6); R(x + 32, y + 74, 4, 2, METAL, 1.6)
+    with prop(cast=(1, 1)):                                     # an empty bottle on the floor
+        R(x + 44, y + 68, 3, 6, TEAL, 4.4); R(x + 45, y + 66, 1, 2, TEAL, 3.6)
+    light(.8 if m.EVE else .3, 4, [(x - 4, y + 10), (x + 36, y + 10), (x + 50, y + 90), (x - 10, y + 90)])
+
+
+def atom_lamp(x, y):
+    """A floor lamp on a tripod: three cone shades on one stem. x, y: the middle of its feet."""
+    with prop(cast=(3, 3)):
+        for dx in (-8, 0, 8):
+            L([(x, y - 30), (x + dx, y)], METAL, 1.6)
+        L([(x, y - 30), (x, y - 56)], METAL, 3.4, 2)
+        for dx, dy in ((-10, -64), (8, -60), (-2, -76)):
+            L([(x, y - 54), (x + dx, y + dy + 4)], METAL, 3)
+            G([(x + dx - 5, y + dy), (x + dx + 5, y + dy - 2), (x + dx + 2, y + dy + 7)], FLOOR + FLAT, 6)
+    light(1 if m.EVE else .4, 4, [(x - 24, y - 84), (x + 22, y - 84), (x + 26, y - 50), (x - 26, y - 50)])
+    if m.EVE:
+        light(.8, 7, [(x - 50, y - 60), (x + 50, y - 60), (x + 66, y + 20), (x - 66, y + 20)])
+
+
+def sculpture(x, y):
+    """An atom on a white plinth: a red nucleus, three orbits in brass, teal and steel. x, y: the plinth's top
+    left."""
+    with prop(cast=(3, 4)):
+        R(x, y, 26, 5, PAPER, 5); R(x, y + 5, 26, 34, PAPER, 4.2); R(x + 22, y + 5, 4, 34, PAPER, 3.2); R(x, y + 38, 26, 1, PAPER, 2.6)
+        R(x + 8, y + 22, 10, 4, FLOOR, 4.6); R(x + 9, y + 23, 8, 1, FLOOR, 3.2)                   # a brass plate
+    with prop(cast=(2, 3)):
+        R(x + 12, y - 8, 2, 9, METAL, 3.4)
+        for k, (c, l) in enumerate(((FLOOR, 4.6), (TEAL, 3.8), (METAL, 3.6))):
+            orbit(x + 13, y - 20, 13, 5, k, c, l)
+        E(x + 9, y - 24, 9, 9, RED, 3.8); E(x + 10, y - 23, 4, 4, RED, 5)
+
+
+def bench_seat(x, y):
+    """A backless bench in the open floor: red vinyl, channel-tufted, on chrome hairpin legs; a paper left on
+    it. 80 x 26."""
+    with prop(cast=(3, 4)):
+        for lx, d in ((6, -2), (72, 2)):
+            L([(x + lx, y + 14), (x + lx + d, y + 26)], METAL, 4.4); L([(x + lx + 3, y + 14), (x + lx + 3 + d, y + 26)], METAL, 3.4)
+        R(x, y, 80, 12, RED, 3.6); R(x, y, 80, 1, RED, 4.6); R(x, y + 12, 80, 3, RED, 2.4); R(x + 78, y, 2, 15, RED, 2.4)
+        R(x, y + 11, 80, 1, PAPER, 5.6)
+        for i in range(7):
+            R(x + 10 + 10 * i, y + 2, 1, 9, RED, 2.6)
+    with prop(cast=(1, 1), rim=0):
+        G([(x + 44, y + 2), (x + 62, y + 1), (x + 64, y + 11), (x + 45, y + 12)], PAPER, 4.8)
+        for i in range(3):
+            R(x + 47, y + 4 + 2 * i, 14, 1, PAPER, 3.6)
+
+
+def butler(x, y):
+    """A house robot by the front door, switched off: a capsule body, a domed head with a dark visor, arms down,
+    on a wheeled base, a dust sheet half off it. x, y: the middle of its base."""
+    with prop(cast=(3, 4)):
+        E(x - 14, y - 8, 28, 10, METAL, 1.8); R(x - 12, y - 14, 24, 8, METAL, 2.6); R(x - 12, y - 14, 24, 1, METAL, 3.6)
+        E(x - 13, y - 56, 26, 46, PAPER, 4.2); E(x - 10, y - 52, 10, 34, PAPER, 5); R(x + 8, y - 46, 4, 28, PAPER, 3.4)
+        R(x - 6, y - 40, 12, 8, METAL, 2.2)
+        for i in range(3):
+            R(x - 4 + 4 * i, y - 38, 2, 2, (RED, FLOOR, TEAL)[i], 2.4)                          # dark lamps: it is off
+        for sx in (-1, 1):
+            L([(x + sx * 13, y - 46), (x + sx * 17, y - 30), (x + sx * 16, y - 20)], METAL, 3.4, 2)
+            E(x + sx * 16 - 3, y - 22, 6, 6, METAL, 2.6)
+        R(x - 3, y - 60, 6, 5, METAL, 2.6)
+        E(x - 11, y - 78, 22, 20, METAL, 3.6); E(x - 9, y - 77, 8, 6, METAL, 5); R(x - 8, y - 70, 16, 5, METAL, 1)
+        L([(x + 6, y - 77), (x + 9, y - 86)], METAL, 3); R(x + 8, y - 88, 3, 3, RED, 3)
+    with prop(cast=(1, 2)):                                     # the dust sheet slipping off one shoulder
+        G([(x - 14, y - 50), (x - 4, y - 58), (x + 2, y - 50), (x - 6, y - 24), (x - 16, y - 18)], PAPER, 4.8)
+        L([(x - 10, y - 50), (x - 12, y - 24)], PAPER, 3.8)
+
+
+def robot(x, y):
+    """A cleaning robot doing its rounds: a dome, an eye, a whip antenna, brushes, a shine behind it. 22 x 16."""
+    with prop(cast=None, rim=0):
+        T(x - 34, y + 9, 32, 5, .6)
+    with prop(cast=(2, 2)):
+        E(x, y + 6, 22, 10, METAL, 2.4); E(x + 1, y + 2, 20, 10, METAL, 3.8); E(x + 4, y + 3, 7, 3, METAL, 5)
+        R(x + 14, y + 6, 4, 2, RED + FLAT, 5); L([(x + 6, y + 3), (x + 2, y - 10)], METAL, 3); R(x + 1, y - 12, 3, 3, RED + FLAT, 5)
+        for bx in (-2, 20):
+            R(x + bx, y + 12, 4, 2, FLOOR, 4)
+
+
+# --- the lounges ----------------------------------------------------------------------------------------------
+def checker(x, y, w, h, a, la):
+    """Diner linoleum: squares of a colour and cream, a chrome edge, scuffed."""
+    with thing(False), prop(cast=None, rim=0):
+        R(x - 2, y - 2, w + 4, h + 4, METAL, 4.4); R(x - 2, y + h + 1, w + 4, 1, METAL, 2.4)
+        for j in range(0, h, 16):
+            for i in range(0, w, 16):
+                c, l = (a, la) if (i + j) // 16 % 2 else (PAPER, 4.2)
+                R(x + i, y + j, min(16, w - i), min(16, h - j), c, l)
+        rnd = random.Random(x + y)
+        for _ in range(w * h // 900):
+            T(x + rnd.randrange(w - 12), y + rnd.randrange(h), rnd.randrange(4, 12), 1, -.6)
+
+
+def booth(x, y, c):
+    """A curved vinyl sofa, channel-tufted, chrome piping, on stick legs, a cushion in a corner. 96 x 44."""
+    with prop(cast=(3, 4)):
+        for lx in (8, 86):
+            L([(x + lx, y + 34), (x + lx + (-4 if lx < 40 else 4), y + 44)], METAL, 4.6, 2)
+        G([(x, y + 8), (x + 10, y), (x + 86, y), (x + 96, y + 8), (x + 96, y + 22), (x, y + 22)], c, 3.4)
+        for i in range(8):
+            R(x + 9 + 11 * i, y + 3, 1, 18, c, 2.4); R(x + 10 + 11 * i, y + 3, 1, 18, c, 4.2)
+        R(x - 2, y + 20, 100, 12, c, 4); R(x - 2, y + 20, 100, 1, c, 5); R(x - 2, y + 31, 100, 3, c, 2.4)
+        R(x - 2, y + 30, 100, 1, PAPER, 5.6)
+    with prop(cast=(1, 2)):
+        G([(x + 14, y + 6), (x + 30, y + 4), (x + 31, y + 18), (x + 15, y + 19)], FLOOR, 4.4)
+
+
+def tulip(x, y, c):
+    """A tulip chair: a moulded cup on one chrome stem and a round foot. 28 x 40."""
+    with prop(cast=(3, 3)):
+        E(x + 2, y + 34, 24, 6, METAL, 3.6); R(x + 13, y + 20, 3, 16, METAL, 4.6)
+        E(x, y, 28, 26, c, 3.2); E(x + 3, y + 2, 22, 18, c, 2); E(x + 4, y + 10, 20, 12, c, 4.2); E(x + 6, y + 11, 8, 4, c, 5.2)
+
+
+def kidney(x, y, things):
+    """A boomerang table on hairpin legs. things: 'tea' (an ashtray, a soda, a magazine) or 'game' (a chess
+    board mid-game). 60 x 30."""
+    with prop(cast=(3, 4)):
+        for lx, dx in ((8, -3), (30, 0), (52, 3)):
+            L([(x + lx, y + 10), (x + lx + dx, y + 28)], METAL, 4.4)
+        G([(x, y + 4), (x + 18, y), (x + 30, y + 6), (x + 44, y), (x + 60, y + 4), (x + 56, y + 14), (x + 30, y + 12), (x + 4, y + 14)], PAPER, 4.6)
+        G([(x, y + 4), (x + 4, y + 14), (x + 30, y + 12), (x + 56, y + 14), (x + 60, y + 4), (x + 60, y + 7), (x + 56, y + 17), (x + 30, y + 15), (x + 4, y + 17), (x, y + 7)], TEAL, 3.4)
+    with prop(cast=(1, 2)):
+        if things == 'tea':
+            E(x + 10, y + 3, 9, 5, METAL, 3.6); R(x + 13, y + 3, 2, 1, RED + FLAT, 5)
+            R(x + 40, y - 6, 4, 9, TEAL, 4.4); R(x + 41, y - 9, 2, 3, TEAL, 3.6); R(x + 40, y - 2, 4, 3, RED, 4)
+            G([(x + 22, y + 5), (x + 34, y + 4), (x + 35, y + 10), (x + 23, y + 11)], FLOOR, 4.8); R(x + 24, y + 6, 6, 2, RED, 3.6)
+        else:
+            R(x + 20, y + 2, 16, 9, PAPER, 5)
+            for i in range(4):
+                for j in range(2):
+                    R(x + 20 + 4 * i + 2 * ((j + i) % 2), y + 3 + 4 * j, 2, 2, METAL, 1.8)
+            R(x + 23, y - 2, 2, 4, RED, 3.6); R(x + 31, y - 1, 2, 3, METAL, 1.6); R(x + 42, y + 4, 3, 3, RED, 4)
+
+
+def arc_lamp(x, y, reach):
+    """A floor lamp on a tall chrome arc: a spiked globe hangs out over the seats. x, y: the middle of its foot;
+    reach: how far the globe is from the pole, left or right."""
+    sx, sy = x + reach, y - 66
+    with prop(cast=(3, 3)):
+        E(x - 8, y - 6, 16, 8, METAL, 3.4); E(x - 7, y - 7, 14, 6, METAL, 4.6)
+        L([(x, y - 5), (x, y - 40), (x + reach // 4, y - 66), (x + reach // 2, y - 76), (x + reach * 3 // 4, y - 76), (sx, y - 70)], METAL, 4, 2)
+        for i in range(8):
+            a = i * math.pi / 4 + .3
+            L([(sx, sy + 4), (round(sx + 9 * math.cos(a)), round(sy + 4 + 9 * math.sin(a)))], METAL, 3.6)
+        E(sx - 5, sy - 1, 10, 10, FLOOR + FLAT, 6); E(sx - 3, sy + 1, 4, 4, PAPER + FLAT, 6)
+    fy = y - 12                                                 # under the globe, on the floor
+    light(1 if m.EVE else .5, 2.5, [(sx - 12, sy - 8), (sx + 12, sy - 8), (sx + 16, sy + 14), (sx - 16, sy + 14)])
+    if m.EVE:
+        light(1, 3, [(sx - 22, fy - 18), (sx + 24, fy - 20), (sx + 34, fy + 6), (sx + 18, fy + 24), (sx - 20, fy + 22), (sx - 32, fy + 2)])
+        light(.8, 5, [(sx - 48, fy - 34), (sx + 30, fy - 46), (sx + 64, fy - 6), (sx + 50, fy + 40), (sx - 10, fy + 56), (sx - 60, fy + 26)])
+        light(.5, 8, [(sx - 80, fy - 50), (sx + 40, fy - 80), (sx + 100, fy - 10), (sx + 80, fy + 70), (sx - 20, fy + 96), (sx - 96, fy + 40)])
+
+
+def lounge(x, y, c, floor, things):
+    """A booth, a boomerang table, a tulip chair each side, on a square of diner linoleum, and a lamp over them.
+    x, y: the linoleum's top left. c: the vinyl; floor: (colour, level) of the dark squares."""
+    checker(x, y, 172, 108, *floor)
+    with thing():
+        booth(x + 38, y - 6, c)
+    with thing():
+        tulip(x + 8, y + 34, RED if c == TEAL else TEAL)
+    with thing():
+        tulip(x + 136, y + 34, RED if c == TEAL else TEAL)
+    with thing():
+        kidney(x + 56, y + 52, things)
+
+
+# --- the floor ------------------------------------------------------------------------------------------------
+def runner(x, y, w, h):
+    """The rubber walkway from the top doorway to the hologram: grey ribs between amber edge lines, worn
+    pale down the middle."""
+    with thing(False), prop(cast=None, rim=0):
+        R(x, y, w, h, METAL, 2.2); R(x + 3, y, 3, h, FLOOR, 4.2); R(x + w - 6, y, 3, h, FLOOR, 4.2)
+        for ry in range(y + 2, y + h, 4):
+            R(x + 9, ry, w - 18, 1, METAL, 2.9)
+        rnd = random.Random(8)
+        for _ in range(h // 5):
+            T(x + w // 2 - 14 + rnd.randrange(24), y + 4 + rnd.randrange(h - 8), rnd.randrange(3, 8), 1, .8)
+
+
+def deck_ring(cx, cy, w, h):
+    """The ring set in the deck round the hologram's plinth: a chrome rim, a hazard band, a dark plate, and a
+    teal light pointing to each doorway."""
+    with thing(False), prop(cast=None, rim=0):
+        for y in range(cy - h // 2, cy + h // 2 + 1):
+            for x in range(cx - w // 2, cx + w // 2 + 1):
+                r = math.hypot((x - cx) / (w / 2), (y - cy) / (h / 2))
+                if r > 1:
+                    continue
+                if r > .95:
+                    R(x, y, 1, 1, METAL, 4.4 if y < cy else 2.6)
+                elif r > .8:
+                    R(x, y, 1, 1, *((FLOOR, 4.2) if int((math.atan2((y - cy) * w / h, x - cx) + math.pi) * 24 / math.pi) % 2 else (METAL, 1.2)))
+                elif r > .76:
+                    R(x, y, 1, 1, METAL, 4)
+                else:
+                    R(x, y, 1, 1, METAL, 2.2)
+        for px, py in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+            tip = (cx + px * (w // 2 + 12), cy + py * (h // 2 + 10))
+            G([tip, (cx + py * 10 + px * (w // 2 + 2), cy - px * 6 + py * (h // 2 + 1)),
+               (cx - py * 10 + px * (w // 2 + 2), cy + px * 6 + py * (h // 2 + 1))], TEAL + FLAT, 4.4)
+
+
+def plate(x, y, w=256, h=96):
+    """The checkpoint: a steel plate bolted into the deck, a hazard border, its two lines raised in amber."""
+    with thing(False), prop(cast=None, rim=0):
+        stripes(x, y, w, h, 4.2)
+        R(x + 6, y + 6, w - 12, h - 12, METAL, 2.6); R(x + 6, y + 6, w - 12, 1, METAL, 3.8); R(x + 6, y + h - 7, w - 12, 1, METAL, 1.2)
+        for bx in (10, w - 13):
+            for by in (10, h - 13):
+                E(x + bx, y + by, 4, 4, METAL, 4.4)
+        tx, ty = x + (w - 2 * max(map(len, TEXT))) // 2, y + (h - 2 * len(TEXT)) // 2
+        for r, row in enumerate(TEXT):
+            for c, ch in enumerate(row):
+                if ch == '#':
+                    R(tx + 2 * c, ty + 2 * r + 1, 2, 2, METAL, 1); R(tx + 2 * c, ty + 2 * r, 2, 2, FLOOR, 4.8)
+        rnd = random.Random(9)
+        for _ in range(14):
+            T(x + 8 + rnd.randrange(w - 30), y + 8 + rnd.randrange(h - 16), rnd.randrange(4, 12), 1, .6)
+
+
+def sill(x, y, w, h):
+    """Hazard stripes on the deck at a doorway."""
+    with thing(False), prop(cast=None, rim=0):
+        stripes(x, y, w, h)
+
+
+# --- light ----------------------------------------------------------------------------------------------------
+def sun(cx):
+    """Sun through a porthole at cx: a round patch under it on the wall, and a long oval out across the deck."""
+    light(.5, 2, [(cx - 22, 74), (cx + 22, 74), (cx + 26, 96), (cx - 26, 96)])
+    light(1, 2, [(cx - 14, 100), (cx + 14, 100), (cx + 46, 150), (cx + 40, 184), (cx + 16, 190), (cx + 2, 160)])
+    light(.5, 4, [(cx - 20, 98), (cx + 20, 98), (cx + 60, 160), (cx + 50, 206), (cx + 6, 206), (cx - 10, 160)])
+
+
+def room_lights():
+    doorways()
+    if not m.EVE:
+        light(.95, 60, lambda d: d.ellipse((-40, -90, W + 40, H + 60), fill=255))                 # daylight, weaker in the corners
+        for cx in PORTHOLES:
+            sun(cx)
+    else:
+        for cx in PORTHOLES:                                                                       # the last of the dusk
+            light(.5, 3, [(cx - 22, 74), (cx + 22, 74), (cx + 28, 96), (cx - 28, 96)])
+            light(.4, 9, [(cx - 16, 110), (cx + 40, 106), (cx + 70, 170), (cx + 30, 196), (cx - 16, 170)])
+
+
+
+
+# --- kept from the cosy Hall: they sit as well in this one ------------------------------------------------------
 def house_map(x, y):
     """A framed map of the house, drawn by hand: the Hall in the middle, a door on each side, a path to each
     room, a red dot where you stand. 96 x 52."""
@@ -181,118 +671,6 @@ def key_box(x, y):
         G([(x + 23, y), (x + 30, y + 3), (x + 30, y + 23), (x + 23, y + 26)], DESK, 3); R(x + 27, y + 12, 1, 3, FLOOR, 5)
 
 
-def sconce(x, y):
-    """A wall light by the doorway: a brass plate and arm, a glowing shade. x, y: the plate."""
-    with prop(cast=(1, 2)):
-        R(x, y, 6, 10, FLOOR, 4.2); R(x + 2, y + 3, 2, 4, FLOOR, 2.6); L([(x + 3, y + 2), (x + 3, y - 4)], FLOOR, 4.4)
-        for i in range(8):
-            w = 6 + i
-            R(x + 3 - w // 2, y - 12 + i, w, 1, FLOOR + FLAT, 6); R(x + 3 - w // 2 + w - w // 3, y - 12 + i, w // 3, 1, FLOOR + FLAT, 5)
-    light(1 if m.EVE else .5, 2.5, [(x - 8, y - 18), (x + 14, y - 18), (x + 18, y + 4), (x + 3, y + 14), (x - 12, y + 4)])
-    if m.EVE:
-        light(.7, 5, [(x - 20, y - 14), (x + 26, y - 16), (x + 34, y + 30), (x + 3, y + 46), (x - 28, y + 28)])
-        light(.6, 6, [(x - 14, y + 70), (x + 22, y + 66), (x + 36, y + 110), (x - 2, y + 128), (x - 30, y + 104)])
-
-
-def gallery(x, y):
-    """Frames hung close together: a portrait, a hill, the hero drawn small, a sun, a strip of photos, one
-    crooked. 82 x 54."""
-    with prop(cast=(1, 2), rim=0):
-        R(x, y + 4, 20, 26, DESK, 3); R(x + 2, y + 6, 16, 22, PAPER, 5); E(x + 5, y + 10, 10, 12, CARD, 4.2)
-        E(x + 5, y + 8, 10, 6, DESK, 2.2); R(x + 4, y + 21, 12, 7, TEAL, 3)
-    with prop(cast=(1, 2), rim=0):
-        R(x + 24, y, 30, 20, METAL, 2.4); R(x + 26, y + 2, 26, 16, TEAL, 4)
-        G([(x + 26, y + 17), (x + 33, y + 9), (x + 38, y + 13), (x + 44, y + 7), (x + 51, y + 14), (x + 51, y + 17)], GREEN, 3)
-        E(x + 43, y + 3, 5, 5, FLOOR, 5.6)
-    with prop(cast=(1, 2), rim=0):                              # the hero, drawn small
-        R(x + 24, y + 24, 18, 26, PAPER, 4.6); R(x + 26, y + 26, 14, 22, CARD, 5)
-        R(x + 30, y + 29, 6, 6, CARD, 4); R(x + 30, y + 28, 6, 2, METAL, 2.6); R(x + 29, y + 35, 8, 6, TEAL, 3.4)
-        R(x + 30, y + 41, 2, 4, METAL, 2.2); R(x + 34, y + 41, 2, 4, METAL, 2.2)
-    with prop(cast=(1, 2), rim=0):
-        R(x + 58, y + 2, 16, 16, RED, 3); R(x + 59, y + 3, 14, 14, PAPER, 5.2); E(x + 61, y + 5, 10, 10, FLOOR, 5); E(x + 64, y + 8, 4, 4, RED, 4)
-    with prop(cast=(1, 2), rim=0):
-        R(x + 46, y + 24, 12, 30, PAPER, 5.2)
-        for i, c in enumerate((TEAL, RED, GREEN)):
-            R(x + 48, y + 26 + 9 * i, 8, 7, c, 3.6); R(x + 50, y + 28 + 9 * i, 3, 3, CARD, 4.6)
-    with prop(cast=(1, 2), rim=0):
-        G([(x + 62, y + 24), (x + 80, y + 27), (x + 77, y + 45), (x + 59, y + 42)], DESK, 3.4)
-        G([(x + 64, y + 27), (x + 77, y + 29), (x + 75, y + 42), (x + 62, y + 40)], FLOOR, 4.6)
-        G([(x + 65, y + 39), (x + 69, y + 31), (x + 74, y + 40)], RED, 3.6)
-
-
-def mirror(x, y):
-    """A tall mirror in a brass frame: the window across the hall in it, and streaks. 30 x 58."""
-    with prop(cast=(2, 3)):
-        R(x, y, 30, 58, FLOOR, 4.4); R(x + 28, y, 2, 58, FLOOR, 3.4); R(x, y + 56, 30, 2, FLOOR, 3)
-        R(x + 3, y + 3, 24, 52, METAL, 3.4); R(x + 3, y + 3, 24, 18, TEAL, 3.6); R(x + 3, y + 21, 24, 2, PAPER, 4)
-        G([(x + 5, y + 44), (x + 15, y + 18), (x + 19, y + 18), (x + 9, y + 44)], PAPER, 4.6)
-        G([(x + 13, y + 52), (x + 26, y + 24), (x + 26, y + 30), (x + 16, y + 52)], PAPER, 4.4)
-        R(x + 13, y - 4, 4, 4, FLOOR, 4.6)
-
-
-# --- furniture ------------------------------------------------------------------------------------------------
-def settle(x, y):
-    """A wooden settle under the window: a high back, two cushions, a book and a scarf left on it. 72 x 39."""
-    with prop(cast=(3, 4)):
-        R(x, y, 72, 4, DESK, 3.8); R(x, y + 4, 72, 14, DESK, 2.6)
-        for i in range(4):
-            R(x + 4 + 17 * i, y + 6, 13, 10, DESK, 3.1); R(x + 4 + 17 * i, y + 6, 13, 1, DESK, 3.7); R(x + 16 + 17 * i, y + 6, 1, 10, DESK, 2.2)
-        R(x, y + 18, 72, 10, DESK, 3.6); R(x, y + 28, 72, 3, DESK, 2.8); R(x, y + 30, 72, 1, DESK, 1.8)
-        R(x + 2, y + 31, 4, 8, DESK, 2.2); R(x + 66, y + 31, 4, 8, DESK, 1.8); R(x + 6, y + 31, 60, 5, DESK, 1)
-    with prop(cast=(2, 2)):
-        G([(x + 5, y + 8), (x + 22, y + 6), (x + 24, y + 21), (x + 6, y + 23)], TEAL, 3.4); L([(x + 8, y + 10), (x + 21, y + 19)], TEAL, 4.4)
-        G([(x + 44, y + 7), (x + 62, y + 8), (x + 61, y + 22), (x + 43, y + 21)], GREEN, 3.6)
-        for i in range(3):
-            R(x + 46, y + 10 + 4 * i, 14, 1, PAPER, 4.6)
-    with prop(cast=(1, 1), rim=0):
-        R(x + 28, y + 20, 12, 7, RED, 3.4); R(x + 29, y + 21, 10, 5, PAPER, 5); R(x + 33, y + 20, 1, 7, RED, 2.6)
-        L([(x + 50, y + 26), (x + 56, y + 22), (x + 66, y + 27)], FLOOR, 4.6, 2)
-
-
-def console(x, y):
-    """The hall table: a lamp, a bowl for keys, the post, a succulent in a bowl. x, y: the top's back edge."""
-    with prop(cast=(3, 4)):
-        R(x + 3, y + 18, 4, 22, DESK, 2.6); R(x + 89, y + 18, 4, 22, DESK, 2); R(x + 10, y + 18, 3, 16, DESK, 1.4); R(x + 83, y + 18, 3, 16, DESK, 1.4)
-        R(x + 7, y + 31, 82, 2, DESK, 2.4)
-        R(x, y, 96, 12, DESK, 3.9); R(x + 94, y + 1, 2, 11, DESK, 3)
-        for gx, gy, gw in ((6, 3, 22), (40, 7, 30), (70, 4, 14)):
-            R(x + gx, y + gy, gw, 1, DESK, 3.4)
-        R(x, y + 12, 96, 6, DESK, 3.1); R(x, y + 17, 96, 1, DESK, 2)
-        for dx in (8, 50):
-            R(x + dx, y + 13, 38, 4, DESK, 3.5); R(x + dx + 17, y + 14, 4, 1, FLOOR, 5)
-    T(x + 7, y + 19, 82, 12, -1.2)
-    with prop(cast=(1, 2)):                                     # under it: a basket of slippers
-        R(x + 30, y + 22, 26, 9, CARD, 3.6); R(x + 30, y + 22, 26, 1, CARD, 4.4); R(x + 33, y + 20, 8, 3, RED, 3.8); R(x + 44, y + 20, 8, 3, TEAL, 3.4)
-    with prop(cast=(2, 3)):                                     # a lamp: a ginger jar, a drum shade
-        E(x + 6, y - 7, 14, 14, TEAL, 3.4); E(x + 8, y - 5, 6, 6, TEAL, 4.6); R(x + 12, y - 12, 2, 6, FLOOR, 4.4)
-        for i in range(10):
-            R(x + 4, y - 23 + i, 18, 1, FLOOR + FLAT, 6 if i < 8 else 5); R(x + 16, y - 23 + i, 6, 1, FLOOR + FLAT, 5)
-    with prop(cast=(1, 2)):                                     # the bowl, keys in it
-        E(x + 30, y + 1, 16, 8, CARD, 3.4); E(x + 31, y + 1, 14, 5, CARD, 2.4); R(x + 34, y + 2, 4, 2, METAL, 4.6); R(x + 39, y + 1, 3, 3, RED, 4)
-    with prop(cast=(1, 1)):                                     # the post, a parcel
-        R(x + 50, y + 2, 14, 8, PAPER, 5); R(x + 52, y + 1, 14, 8, PAPER, 4.4); R(x + 53, y + 3, 6, 1, PAPER, 3); R(x + 62, y + 2, 3, 3, RED, 4)
-        R(x + 68, y - 6, 15, 12, CARD, 3.6); R(x + 68, y - 6, 15, 3, CARD, 4.4); R(x + 74, y - 6, 2, 12, PAPER, 4.6)
-    with prop(cast=(1, 2)):                                     # a succulent
-        E(x + 85, y, 10, 7, PAPER, 4.2)
-        for i, (dx, h, l) in enumerate(((1, 4, 3.2), (3, 7, 3.8), (5, 6, 3.4), (7, 4, 3))):
-            R(x + 85 + dx, y - h + 1, 2, h, GREEN, l); R(x + 85 + dx, y - h + 1, 1, 1, GREEN, l + 1)
-    lx, ly = x + 13, y - 18                                     # the lamp's light
-    light(1 if m.EVE else .5, 2.5, [(lx - 14, ly - 12), (lx + 14, ly - 12), (lx + 20, ly + 10), (lx - 18, ly + 12)])
-    if m.EVE:
-        light(1, 3, [(lx - 16, ly + 10), (lx + 34, ly + 10), (lx + 40, ly + 28), (lx - 18, ly + 30)])
-        light(.8, 4, [(lx - 26, ly + 22), (lx + 40, ly + 16), (lx + 58, ly + 56), (lx + 20, ly + 84), (lx - 30, ly + 64)])
-        light(.5, 7, [(lx - 50, ly + 30), (lx + 50, ly + 8), (lx + 90, ly + 70), (lx + 30, ly + 120), (lx - 46, ly + 96)])
-
-
-def umbrella_stand(x, y):
-    """A tin of umbrellas by the door: a red crook, a black one, a folded teal one. x, y: the tin's rim."""
-    with prop(cast=(2, 3)):
-        L([(x + 4, y + 2), (x + 3, y - 16)], RED, 3.6, 2); R(x, y - 19, 5, 2, RED, 4); R(x - 1, y - 18, 2, 4, RED, 3.6)
-        L([(x + 10, y + 2), (x + 12, y - 20)], METAL, 2.4, 2); R(x + 11, y - 23, 4, 3, DESK, 3.4)
-        G([(x + 6, y + 1), (x + 9, y + 1), (x + 8, y - 12), (x + 7, y - 12)], TEAL, 3.4); R(x + 7, y - 15, 1, 3, METAL, 2.6)
-        R(x, y, 14, 3, METAL, 4); R(x + 1, y + 3, 12, 17, METAL, 3); R(x + 10, y + 3, 3, 17, METAL, 2); R(x + 1, y + 9, 12, 1, METAL, 2.2)
-
-
 def monstera(x, y):
     """A monstera in a woven basket: big split leaves on long stems. x, y: the basket's rim."""
     for dx, dy, w, h, l in ((-12, -42, 22, 16, 3.4), (12, -50, 24, 18, 3.8), (-2, -32, 20, 14, 3), (16, -28, 20, 14, 3.2),
@@ -329,24 +707,6 @@ def fig(x, y):
             R(x + px, y + py, 1, 1, METAL, 2.6)
 
 
-def chest(x, y):
-    """A wooden chest under the gallery: a folded blanket and a pile of magazines on the lid. 64 x 32."""
-    with prop(cast=(3, 4)):
-        R(x, y, 64, 9, DESK, 3.9); R(x, y + 9, 64, 21, DESK, 2.9); R(x + 61, y + 9, 3, 21, DESK, 2.1)
-        R(x, y + 9, 64, 1, DESK, 2); R(x + 4, y + 13, 56, 1, DESK, 2.4); R(x + 4, y + 25, 56, 1, DESK, 2.4)
-        for bx in (6, 54):
-            R(x + bx, y + 9, 4, 21, METAL, 2.6); R(x + bx, y + 9, 1, 21, METAL, 3.6)                  # straps
-        R(x + 28, y + 12, 8, 7, FLOOR, 4.6); R(x + 31, y + 15, 2, 2, DESK, 1.4)                     # the lock
-        R(x + 2, y + 30, 5, 2, DESK, 1.6); R(x + 57, y + 30, 5, 2, DESK, 1.6)
-    with prop(cast=(2, 2)):
-        R(x + 4, y - 4, 30, 10, RED, 3.6); R(x + 4, y + 4, 30, 2, RED, 2.6)
-        for i in range(4):
-            R(x + 6 + 7 * i, y - 4, 3, 10, PAPER, 4.8)
-    with prop(cast=(1, 2)):
-        for i, (c, w) in enumerate(((PAPER, 20), (TEAL, 18), (RED, 19))):
-            R(x + 40 + i % 2, y + 3 - 3 * i, w, 3, c, 4); R(x + 40 + i % 2, y + 5 - 3 * i, w, 1, c, 2.8)
-
-
 def vitrine(x, y):
     """A glass cabinet of what the studio is proud of: a trophy, a printed head, a rocket, a camera, records,
     books. Lit inside. 56 x 86."""
@@ -371,32 +731,6 @@ def vitrine(x, y):
     light(.8 if m.EVE else .3, 3, [(x + 2, y + 6), (x + 54, y + 6), (x + 56, y + 84), (x, y + 84)])
     if m.EVE:
         light(.5, 5, [(x - 8, y + 80), (x + 64, y + 80), (x + 74, y + 120), (x - 12, y + 122)])
-
-
-def pigeonholes(x, y):
-    """The post: a pigeonhole each on a cupboard by the left wall. Letters, a parcel, a magazine, a scarf. 40 x 70."""
-    rnd = random.Random(14)
-    with prop(cast=(3, 4)):
-        R(x, y, 40, 4, DESK, 3.9); R(x, y + 4, 40, 34, DESK, 2.8); R(x + 37, y + 4, 3, 34, DESK, 2)
-        for row in range(3):
-            for col in range(3):
-                cx, cy = x + 3 + 11 * col, y + 6 + 11 * row
-                R(cx, cy, 10, 9, DESK, 1); R(cx, cy, 10, 1, DESK, .4)
-                k = rnd.randrange(5)
-                if k < 2:
-                    R(cx + 1, cy + 4, 8, 5, PAPER, 5 - k * .6); R(cx + 2, cy + 3, 6, 6, PAPER, 4.4)
-                elif k == 2:
-                    R(cx + 1, cy + 3, 8, 6, CARD, 3.8); R(cx + 4, cy + 3, 2, 6, PAPER, 4.6)
-                elif k == 3:
-                    R(cx + 2, cy + 2, 6, 7, RED, 3.6); R(cx + 3, cy + 3, 4, 2, PAPER, 5)
-        L([(x + 26, y + 18), (x + 28, y + 32)], TEAL, 3.4, 2)                   # a scarf hangs out of one
-        R(x, y + 38, 40, 32, DESK, 3.2); R(x, y + 38, 40, 2, DESK, 4.2); R(x + 37, y + 38, 3, 32, DESK, 2.2)
-        R(x + 19, y + 41, 2, 27, DESK, 2); R(x + 15, y + 52, 2, 3, FLOOR, 5); R(x + 23, y + 52, 2, 3, FLOOR, 5)
-        R(x + 2, y + 70, 4, 2, DESK, 1.6); R(x + 34, y + 70, 4, 2, DESK, 1.6)
-    with prop(cast=(1, 2)):                                     # a plant on top
-        R(x + 26, y - 6, 9, 7, PAPER, 4.4); R(x + 33, y - 6, 2, 7, PAPER, 3.4)
-        for lx, ly in ((24, -10), (28, -13), (32, -11), (36, -8), (37, -2), (38, 4), (36, 10)):
-            R(x + lx, y + ly, 3, 3, GREEN, 3.4 + (lx % 2) * .8)
 
 
 def coat_stand(x, y):
@@ -447,18 +781,6 @@ def water_cooler(x, y):
         R(x - 4, y + 64, 3, 4, PAPER, 5); R(x - 2, y + 63, 2, 1, PAPER, 4)    # a cup on the floor
 
 
-def sculpture(x, y):
-    """A head on a white plinth, tubes for a face. x, y: the plinth's top left."""
-    with prop(cast=(3, 4)):
-        R(x, y, 26, 5, PAPER, 5); R(x, y + 5, 26, 34, PAPER, 4.2); R(x + 22, y + 5, 4, 34, PAPER, 3.2); R(x, y + 38, 26, 1, PAPER, 2.6)
-        R(x + 8, y + 22, 10, 4, FLOOR, 4.6); R(x + 9, y + 23, 8, 1, FLOOR, 3.2)                   # a brass plate
-    with prop(cast=(2, 3)):
-        R(x + 10, y - 6, 6, 7, CARD, 3.4); E(x + 4, y - 31, 18, 27, CARD, 3.8); E(x + 6, y - 29, 8, 10, CARD, 4.6)
-        E(x + 5, y - 33, 16, 7, METAL, 2.4)
-        for i, c in enumerate((TEAL, RED, FLOOR, TEAL)):
-            R(x + 4, y - 24 + 4 * i, 18, 2, c, 3.6); R(x + 21, y - 24 + 4 * i, 2, 2, c, 5)
-
-
 def pedestal(cx, y):
     """The plinth the hologram stands on: a low drum of dark metal, a ring of teal lights, a lens in the middle.
     The hologram over it is the game's (hallHologram.png). cx, y: its middle, its top edge."""
@@ -479,197 +801,8 @@ def pedestal(cx, y):
         light(.5, 3, [(cx - 44, y - 2), (cx + 44, y - 2), (cx + 52, y + 30), (cx - 52, y + 30)])
 
 
-# --- the lounges ----------------------------------------------------------------------------------------------
-def club_chair(x, y, c, l=0, flip=False):
-    """A club chair seen from the side, turned to the low table: the back is the slab on its far side, then the
-    seat between two arms. flip: it faces left. 36 x 46."""
-    def r(dx, dy, w, h, lv, mt=c):
-        R(x + (36 - dx - w if flip else dx), y + dy, w, h, mt, lv + l)
-    with prop(cast=(3, 4)):
-        r(2, 41, 4, 4, 1.6, DESK); r(30, 41, 4, 4, 1.6, DESK)
-        r(0, 0, 12, 41, 2.8); r(0, 0, 12, 4, 3.9); r(10, 4, 2, 37, 3.4)
-        for i in range(4):
-            r(4, 8 + 8 * i, 2, 1, 2); r(8, 12 + 8 * i, 1, 1, 2)                                 # buttons
-        r(10, 6, 26, 8, 3.9); r(10, 13, 26, 2, 2.8)                                             # the far arm
-        r(10, 15, 24, 14, 3.5); r(14, 20, 14, 1, 3.1)                                           # the seat
-        r(10, 27, 26, 8, 4.1); r(10, 35, 26, 6, 2.6); r(10, 35, 26, 1, 3.4)                     # the near arm
-    with prop(cast=(1, 2)):
-        r(14, 15, 11, 10, 4.6, PAPER); r(15, 17, 9, 1, 3.6, PAPER); r(15, 20, 6, 1, 3.6, PAPER)  # a cushion
-
-
-def side_table(x, y, things):
-    """A round low table, 36 wide. things: what is on it, 'tea' or 'game'."""
-    with prop(cast=(3, 4)):
-        E(x + 8, y + 26, 20, 6, DESK, 2.2); R(x + 16, y + 14, 4, 14, DESK, 2); R(x + 18, y + 14, 1, 14, DESK, 1.4)
-        E(x, y + 3, 36, 16, DESK, 2.6); E(x, y, 36, 16, DESK, 3.9); E(x + 5, y + 3, 14, 6, DESK, 4.3)
-    if things == 'tea':
-        with prop(cast=(1, 2)):
-            R(x + 8, y + 2, 6, 6, PAPER, 5); R(x + 13, y + 3, 2, 2, PAPER, 4.4); R(x + 9, y + 2, 4, 1, DESK, 1.6)
-            R(x + 20, y - 4, 6, 9, PAPER, 4.4); R(x + 21, y - 8, 4, 5, GREEN, 3.6); E(x + 19, y - 12, 4, 4, RED, 4.4); E(x + 23, y - 13, 4, 4, FLOOR, 5.2)
-            R(x + 16, y + 9, 12, 4, RED, 3.6); R(x + 17, y + 8, 12, 4, PAPER, 4.8)
-    else:
-        with prop(cast=(1, 1)):
-            R(x + 9, y + 2, 16, 10, PAPER, 5)
-            for i in range(4):
-                for j in range(2):
-                    R(x + 9 + 4 * i + 2 * ((j + i) % 2), y + 3 + 4 * j, 2, 2, METAL, 1.8)
-            R(x + 12, y - 2, 2, 4, RED, 3.6); R(x + 20, y - 1, 2, 3, METAL, 1.6); R(x + 27, y + 4, 3, 3, RED, 4)
-
-
-def loveseat(x, y, c, l=0):
-    """A two-seat sofa with rolled arms and a buttoned back, facing us. 80 x 46."""
-    with prop(cast=(3, 4)):
-        R(x + 3, y + 42, 4, 4, DESK, 2); R(x + 73, y + 42, 4, 4, DESK, 1.6)
-        R(x + 8, y, 64, 5, c, 3.9 + l); R(x + 8, y + 5, 64, 13, c, 2.7 + l)
-        for i in range(7):
-            R(x + 13 + 9 * i, y + 9 + (i % 2) * 4, 1, 1, c, 1.8 + l)
-        for i in range(2):
-            cx = x + 9 + 31 * i
-            R(cx, y + 17, 31, 14, c, 3.6 + l); R(cx, y + 17, 31, 1, c, 2.4 + l); R(cx + 30, y + 17, 1, 14, c, 2.8 + l)
-            R(cx, y + 31, 31, 7, c, 2.9 + l); R(cx, y + 31, 31, 1, c, 4 + l)
-        R(x + 8, y + 38, 64, 4, c, 2 + l)
-        for ax, d in ((x, 0), (x + 70, -.4)):
-            E(ax, y + 3, 10, 9, c, 4.2 + l + d); R(ax, y + 8, 10, 28, c, 3.6 + l + d); R(ax, y + 36, 10, 6, c, 2.6 + l + d); E(ax + 1, y + 34, 8, 5, c, 3.2 + l + d)
-    with prop(cast=(2, 2)):
-        G([(x + 12, y + 8), (x + 26, y + 6), (x + 28, y + 19), (x + 13, y + 21)], FLOOR, 4.6); L([(x + 14, y + 10), (x + 26, y + 18)], FLOOR, 3.6)
-
-
-def arc_lamp(x, y, reach):
-    """A floor lamp on a tall arc: the shade hangs out over the seats. x, y: the middle of its foot; reach: how far
-    the shade is from the pole, left or right."""
-    sx, sy = x + reach, y - 66
-    with prop(cast=(3, 3)):
-        E(x - 8, y - 6, 16, 8, PAPER, 3.4); E(x - 7, y - 7, 14, 6, PAPER, 4.6)
-        L([(x, y - 5), (x, y - 40), (x + reach // 4, y - 66), (x + reach // 2, y - 76), (x + reach * 3 // 4, y - 76), (sx, y - 70)], METAL, 3.4, 2)
-        for i in range(7):
-            w = 6 + 2 * i
-            R(sx - w // 2, sy + i, w, 1, FLOOR + FLAT, 6); R(sx - w // 2 + w - w // 3, sy + i, w // 3, 1, FLOOR + FLAT, 5)
-        R(sx - 9, sy + 7, 18, 1, RED + FLAT, 5)
-    fy = y - 12                                                 # under the shade, on the floor
-    light(1 if m.EVE else .5, 2.5, [(sx - 10, sy - 6), (sx + 10, sy - 6), (sx + 16, sy + 12), (sx - 16, sy + 12)])
-    if m.EVE:
-        light(1, 3, [(sx - 22, fy - 18), (sx + 24, fy - 20), (sx + 34, fy + 6), (sx + 18, fy + 24), (sx - 20, fy + 22), (sx - 32, fy + 2)])
-        light(.8, 5, [(sx - 48, fy - 34), (sx + 30, fy - 46), (sx + 64, fy - 6), (sx + 50, fy + 40), (sx - 10, fy + 56), (sx - 60, fy + 26)])
-        light(.5, 8, [(sx - 80, fy - 50), (sx + 40, fy - 80), (sx + 100, fy - 10), (sx + 80, fy + 70), (sx - 20, fy + 96), (sx - 96, fy + 40)])
-
-
-def lattice_rug(x, y, w, h, a, b, la=3, lb=4.2):
-    """A rug with a plain border and a lattice in the field, fringed at both ends."""
-    with thing(False), prop(cast=None, rim=0):
-        for fy in range(y + 1, y + h - 1, 2):
-            R(x - 4, fy, 4, 1, PAPER, 4 - (fy % 4) * .2); R(x + w, fy, 4 + (fy % 5 == 0), 1, PAPER, 4)
-        R(x, y, w, h, a, la - .6); R(x + 4, y + 4, w - 8, h - 8, b, lb); R(x + 6, y + 6, w - 12, h - 12, a, la)
-        for i in range(x + 6, x + w - 6):
-            for j in range(y + 6, y + h - 6):
-                if (i - x + j - y) % 12 == 0 or (i - x - (j - y)) % 12 == 0:
-                    R(i, j, 1, 1, b, lb - .6)
-        rnd = random.Random(x + y)
-        for _ in range(w * h // 1200):
-            T(x + 8 + rnd.randrange(w - 30), y + 8 + rnd.randrange(h - 17), rnd.randrange(5, 13), 1, .7)
-
-
-def lounge(x, y, c, cl, things):
-    """A sofa, a low table, a chair each side, on a rug, and a lamp over them. x, y: the rug's top left."""
-    lattice_rug(x, y, 172, 108, cl[0], cl[1])
-    with thing():
-        loveseat(x + 46, y - 12, c)
-    with thing():
-        club_chair(x + 6, y + 28, c, -.3)
-    with thing():
-        club_chair(x + 134, y + 28, c, -.6, flip=True)
-    with thing():
-        side_table(x + 68, y + 46, things)
-
-
-# --- by the doors, and the floor ------------------------------------------------------------------------------
-def coir(x, y, w, h):
-    """A coir mat: lighter than the boards round it, a darker border, the weave in rows."""
-    with thing(False), prop(cast=(1, 1), rim=0):
-        R(x, y, w, h, RED, 3.3); R(x + 2, y + 2, w - 4, h - 4, FLOOR, 4.3)
-        for i in range(w - 4):
-            R(x + 2 + i, y + 2 + (i * 3) % max(h - 6, 1), 1, 2, FLOOR, 3.5)
-
-
-def runner(x, y, w, h):
-    """The runner from the top doorway to the hologram: teal, a paper band each side, chevrons down the middle,
-    worn pale where everyone walks."""
-    with thing(False), prop(cast=None, rim=0):
-        for fx in range(x + 1, x + w - 1, 2):
-            R(fx, y - 4, 1, 4, PAPER, 4 - (fx % 4) * .2); R(fx, y + h, 1, 4 + (fx % 5 == 0), PAPER, 4)
-        R(x, y, w, h, TEAL, 2.4); R(x + 4, y, 3, h, PAPER, 4.4); R(x + w - 7, y, 3, h, PAPER, 4.4)
-        R(x + 9, y, w - 18, h, TEAL, 3)
-        mid = x + w // 2
-        for cy in range(y + 6, y + h - 10, 14):
-            for i in range(-14, 15):
-                R(mid + i, cy + abs(i) // 2, 1, 2, CARD, 4)
-        rnd = random.Random(8)
-        for _ in range(h // 6):
-            T(mid - 14 + rnd.randrange(24), y + 4 + rnd.randrange(h - 8), rnd.randrange(3, 8), 1, .8)
-
-
-def compass_rug(cx, cy, w, h):
-    """The round rug the hologram stands on: rings, and a point to each doorway."""
-    with thing(False), prop(cast=None, rim=0):
-        for (px, py), c in (((0, -1), RED), ((0, 1), RED), ((-1, 0), PAPER), ((1, 0), PAPER)):
-            tip = (cx + px * (w // 2 + 12), cy + py * (h // 2 + 10))
-            G([tip, (cx + py * 14 + px * (w // 2 - 10), cy - px * 9 + py * (h // 2 - 8)),
-               (cx - py * 14 + px * (w // 2 - 10), cy + px * 9 + py * (h // 2 - 8))], c, 4 if c == RED else 4.4)
-        for i, (c, l) in enumerate(((METAL, 2.4), (CARD, 4), (METAL, 3), (CARD, 3.4), (TEAL, 2.8))):
-            d = (0, 4, 8, 18, 22)[i]
-            E(cx - w // 2 + d, cy - h // 2 + round(d * h / w), w - 2 * d, h - 2 * round(d * h / w), c, l)
-        for i in range(24):
-            a = i * math.pi / 12
-            R(round(cx + (w // 2 - 13) * math.cos(a)), round(cy + (h // 2 - 8) * math.sin(a)), 2, 1, PAPER, 4.6)
-
-
-def checkpoint(x, y, w=256, h=96):
-    """The carpet in front of the bottom doorway: rust red, an amber band, fringed, and its two lines woven in."""
-    with thing(False), prop(cast=None, rim=0):
-        for fy in range(y + 1, y + h - 1, 2):
-            R(x - 5, fy, 5, 1, PAPER, 4 - (fy % 4) * .2); R(x + w, fy, 5 + (fy % 5 == 0), 1, PAPER, 4)
-        R(x, y, w, h, RED, 2.2); R(x + 3, y + 3, w - 6, h - 6, FLOOR, 3.7); R(x + 5, y + 5, w - 10, h - 10, RED, 2.8)
-        for sx in range(x + 8, x + w - 8, 6):                   # a row of stitches inside the band
-            R(sx, y + 8, 3, 1, FLOOR, 3.7); R(sx, y + h - 9, 3, 1, FLOOR, 3.7)
-        tx, ty = x + (w - 2 * max(map(len, TEXT))) // 2, y + (h - 2 * len(TEXT)) // 2
-        rnd = random.Random(4)
-        for i in range(10):                                     # threadbare, above and below the words
-            T(x + 10 + rnd.randrange(w - 34), (y + 11, ty + 2 * len(TEXT) + 3)[i % 2] + rnd.randrange(ty - y - 14), rnd.randrange(5, 13), 1, .7)
-        for r, row in enumerate(TEXT):
-            for c, ch in enumerate(row):
-                if ch == '#':
-                    R(tx + 2 * c, ty + 2 * r, 2, 2, FLOOR, 4.9)
-
-
 def ring(cx, cy, r, c, l):
     L([(round(cx + r * math.cos(a * math.pi / 12)), round(cy + r * math.sin(a * math.pi / 12))) for a in range(25)], c, l, 2)
-
-
-def bike(x, y):
-    """A bike on its stand by the front door, a helmet hung on the bars. 72 x 48."""
-    with prop(cast=(3, 3)):
-        ring(x + 14, y + 32, 13, METAL, 1.4); ring(x + 58, y + 32, 13, METAL, 1.4)
-        R(x + 13, y + 31, 3, 3, METAL, 3.6); R(x + 57, y + 31, 3, 3, METAL, 3.6)
-        L([(x + 14, y + 32), (x + 30, y + 14), (x + 54, y + 14), (x + 58, y + 32)], RED, 3.6, 2)
-        L([(x + 14, y + 32), (x + 34, y + 33), (x + 30, y + 14)], RED, 3.2, 2); L([(x + 34, y + 33), (x + 54, y + 14)], RED, 3.2, 2)
-        L([(x + 30, y + 14), (x + 28, y + 6)], METAL, 3, 2); R(x + 22, y + 4, 12, 3, METAL, 1.8)
-        L([(x + 54, y + 14), (x + 52, y + 4)], METAL, 3, 2); R(x + 47, y + 3, 12, 2, METAL, 2.4)
-        E(x + 30, y + 29, 8, 8, METAL, 3.4); R(x + 34, y + 38, 5, 2, METAL, 2); L([(x + 36, y + 34), (x + 40, y + 46)], METAL, 2.4)
-    with prop(cast=(1, 2)):
-        E(x + 49, y - 6, 14, 10, TEAL, 3.4); E(x + 51, y - 5, 7, 4, TEAL, 4.6); R(x + 49, y + 1, 14, 2, TEAL, 2.4)
-
-
-def bench_seat(x, y):
-    """A backless bench in the open floor, buttoned on top: a newspaper left on it. 80 x 26."""
-    with prop(cast=(3, 4)):
-        R(x + 3, y + 18, 4, 8, DESK, 2.2); R(x + 73, y + 18, 4, 8, DESK, 1.8); R(x + 7, y + 18, 66, 3, DESK, 1)
-        R(x, y, 80, 12, GREEN, 3.6); R(x, y, 80, 1, GREEN, 4.4); R(x, y + 12, 80, 6, GREEN, 2.6); R(x + 78, y, 2, 18, GREEN, 2.4)
-        for i in range(8):
-            R(x + 5 + 10 * i, y + 4 + (i % 2) * 4, 1, 1, GREEN, 2.4)
-    with prop(cast=(1, 1), rim=0):
-        G([(x + 44, y + 2), (x + 62, y + 1), (x + 64, y + 11), (x + 45, y + 12)], PAPER, 4.8)
-        for i in range(3):
-            R(x + 47, y + 4 + 2 * i, 14, 1, PAPER, 3.6)
-        R(x + 54, y + 3, 6, 4, METAL, 3)
 
 
 def guest_table(x, y):
@@ -749,22 +882,6 @@ def litter(rnd, n):
                 ring(x, y, 2, RED, 3.6)
 
 
-def wear(rnd):
-    """Scratches along the boards, more of them on the way between the doors."""
-    for _ in range(26):
-        x, y = rnd.randrange(X0 + 10, X1 - 40), rnd.randrange(Y0 + 20, Y1 - 6)
-        L([(x, y), (x + rnd.randrange(8, 22), y + rnd.randrange(-1, 2))], FLOOR, 2.3)
-
-
-# --- light ----------------------------------------------------------------------------------------------------
-def sun(x):
-    """Sun through a hall window at x: a patch down the wall under it and out across the boards."""
-    for x0 in (x + 3, x + 27):
-        light(1, 1.2, [(x0, 96), (x0 + 21, 96), (x0 + 84, 200), (x0 + 52, 200)])
-        light(.6, 2.5, [(x0 + 4, 96), (x0 + 17, 96), (x0 + 44, 146), (x0 + 28, 142)])
-    light(.5, 2, [(x - 2, 74), (x + 54, 74), (x + 56, 96), (x - 2, 96)])
-
-
 def doorways():
     """The light that comes in through the four doorways: by day the next rooms are bright, in the evening lit."""
     a, b = (1, .7) if not m.EVE else (.9, .7)
@@ -781,82 +898,74 @@ def doorways():
     light(b, 5, [(X1, y0), (X1 - 60, y0 - 8), (X1 - 60, y1 + 14), (X1, y1)])
 
 
-def room_lights():
-    doorways()
-    if not m.EVE:
-        light(.95, 60, lambda d: d.ellipse((-40, -90, W + 40, H + 60), fill=255))                 # daylight, weaker in the corners
-        for x in (60, 330, 900):
-            sun(x)
-    else:
-        for x in (60, 330, 900):                                                                   # the last of the dusk
-            light(.5, 3, [(x, 74), (x + 52, 74), (x + 60, 96), (x - 6, 96)])
-            light(.4, 9, [(x + 10, 110), (x + 70, 106), (x + 100, 170), (x + 60, 196), (x + 14, 170)])
-
-
 # --- the room -------------------------------------------------------------------------------------------------
+PORTHOLES = (86, 356, 926)
+
+
 def draw():
     rnd = random.Random(11)
-    shell(); wear(rnd)
-    # flat: what is on the floor, then rugs and mats over it
+    shell()
+    worn([(640, 100), (640, 340)], 60, rnd); worn([(640, 440), (640, 700)], 60, rnd)
+    worn([(20, 512), (300, 470), (540, 410)], 40, rnd); worn([(1260, 160), (1000, 260), (740, 370)], 40, rnd)
+    # flat: what is on the floor, then the walkway, the ring and the plate over it
     with thing(False):
-        litter(rnd, 30)
-    runner(604, 100, 72, 236)
-    compass_rug(640, 394, 176, 100)
-    checkpoint(512, 512)
-    coir(20, 486, 24, 54); coir(1236, 134, 24, 54); coir(592, 692, 96, 22)
+        litter(rnd, 24)
+    runner(612, 108, 56, 228)
+    deck_ring(640, 394, 176, 100)
+    plate(512, 512)
+    sill(DOOR_X[0] - 10, 98, DOOR_X[1] - DOOR_X[0] + 20, 10); sill(20, 486, 16, 54); sill(1244, 134, 16, 54); sill(592, 696, 96, 10)
     with thing(False):
         m.socket(846, 77)
         cable([(682, 402), (720, 404), (760, 396), (800, 380), (830, 340), (846, 280), (850, 200), (850, 120), (849, 96), (849, 84)],
               tape=((716, 402), (836, 330), (846, 220), (847, 150)))
     # the back wall, left to right
-    with thing():
-        hall_window(60, 12, ((0, 30, 6, 2), (6, 24, 8, 1), (15, 33, 6, 2), (22, 27, 9, 1), (32, 20, 6, 1), (38, 30, 7, 2)))
+    for cx in PORTHOLES:
+        with thing():
+            porthole(cx, 36)
     house_map(190, 14)
-    with thing():
-        hall_window(330, 12, ((0, 26, 9, 1), (9, 33, 5, 2), (14, 22, 7, 1), (22, 30, 8, 2), (30, 25, 6, 1), (37, 34, 8, 2)), TEAL, 3)
-    key_box(424, 32)
-    sconce(540, 42); sconce(734, 42)
-    gallery(766, 14)
-    with thing():
-        hall_window(900, 12, ((0, 34, 7, 2), (7, 26, 6, 1), (13, 30, 9, 2), (23, 21, 6, 1), (29, 28, 8, 2), (38, 32, 7, 1)), GREEN, 3.4)
-    m.clock(972, 22)
-    mirror(1072, 14)
-    m.fairy_lights(((20, 12, 56, 13, 5), (126, 12, 188, 14, 6), (288, 12, 328, 13, 5), (392, 12, 448, 14, 6),
-                    (712, 12, 766, 14, 6), (850, 12, 898, 14, 5), (1000, 12, 1068, 14, 7), (1104, 12, 1180, 15, 8), (1180, 15, 1250, 12, 7)))
+    key_box(424, 26)
+    sconce(540, 44); sconce(770, 44)
+    posters(784, 14)
+    starburst(976, 30)
+    intercom(1066, 18)
     # along the back wall
     with thing(tall=True):
         monstera(26, 104)
     with thing():
-        settle(48, 86)
+        wall_bench(52, 86)
     with thing(tall=True):
-        arc_lamp(150, 124, -22)
+        atom_lamp(156, 124)
     with thing():
-        console(440, 84)
+        terminal(410, 78)
     with thing():
-        umbrella_stand(546, 104)
+        extinguisher(546, 122)
     with thing():
-        chest(774, 92)
+        footlocker(780, 92)
     with thing(tall=True):
-        fig(856, 106)
+        fig(862, 106)
     with thing(tall=True):
         vitrine(1000, 38)
-    # the left wall: the post, coats, the side door's boots, the boxes in the corner
     with thing(tall=True):
-        pigeonholes(18, 212)
+        jukebox(1104, 40)
     with thing(tall=True):
-        coat_stand(36, 348)
+        vending(1160, 40)
+    # the left wall: lockers, coats, the side door's boots, the boxes in the corner
+    with thing(tall=True):
+        lockers(36, 212)
+    with thing(tall=True):
+        coat_stand(48, 348)
     with thing():
-        boots(20, 600)
+        boots(36, 600)
     with thing():
-        m.box(22, 668, 30, 10, 26, 0, 10)
+        m.box(38, 668, 30, 10, 26, 0, 10)
     with thing():
-        m.box(54, 680, 26, 9, 18, .2, 4); m.box(24, 650, 22, 7, 12, .3, 6)
+        m.box(70, 680, 26, 9, 18, .2, 4); m.box(40, 650, 22, 7, 12, .3, 6)
     # the right wall
     with thing(tall=True):
         water_cooler(1234, 280)
     with thing(tall=True):
         fig(1236, 388)
-    # the open floor: a bench by the hero's first steps, a sculpture, the hologram's plinth
+    # the open floor: a bench by the hero's first steps, the atom, the hologram's plinth, the cleaning robot
     with thing():
         bench_seat(200, 384)
     with thing():
@@ -869,16 +978,18 @@ def draw():
         lost_found(112, 676)
     with thing():
         pedestal(640, 372)
+    with thing():
+        robot(330, 600)
     # the lounges by the right wall
-    lounge(1082, 470, RED, (CARD, RED), 'tea')
-    lounge(1082, 598, TEAL, (METAL, TEAL), 'game')
+    lounge(1082, 470, TEAL, (RED, 3.1), 'tea')
+    lounge(1082, 598, RED, (TEAL, 3.2), 'game')
     with thing(tall=True):
         arc_lamp(1064, 566, 64)
     with thing(tall=True):
         arc_lamp(1064, 662, 64)
     # by the front door
-    with thing():
-        bike(452, 664)
+    with thing(tall=True):
+        butler(470, 700)
     with thing():
         m.box(740, 668, 32, 10, 28, 0, 12); m.box(748, 650, 22, 7, 12, .3, 6)
     with thing():
