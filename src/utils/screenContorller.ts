@@ -2,7 +2,7 @@
 
 import AboutScreen from '../titleScreen/aboutScreen';
 import CharacterSelection from '../titleScreen/characterSelection';
-import TitleScreen from '../titleScreen/titleScreen';
+import TitleScreen from '../titleScreen/TitleScreen';
 import World from '../world/defineWorld';
 
 let currentScreen: any = null;

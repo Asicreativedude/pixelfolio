@@ -1,7 +1,7 @@
 import RevealingText from '../utils/revealText';
 import { ScreenController } from '../utils/screenContorller';
 import utils from '../utils/utils';
-import TitleScreenSprite from './titleScreenSprite';
+import TitleScreenSprite from './TitleScreenSprite';
 
 export default class AboutScreen {
   gameContainer: HTMLElement;
