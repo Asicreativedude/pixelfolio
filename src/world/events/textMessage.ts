@@ -22,7 +22,7 @@ export default class TextMessage {
 
   createElement() {
     const fontImage = new Image();
-    fontImage.src = '/Letters.png';
+    fontImage.src = '/dialogue/letters.png'; // art/ui.py: Letters.png in K, on the paper box
 
     this.element = document.createElement('div');
     this.element.classList.add('TextMessage');
