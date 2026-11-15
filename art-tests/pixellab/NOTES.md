@@ -263,5 +263,6 @@ Asi asked whether Claude can run Aseprite or just build the characters itself. B
   potted plants are still the small room's drawings; a figure right below another covers it with its head (the engine's
   sorting, same in the Hall); the small room's `in-game-*.png` frames show the old floor; dialogue box, title screen, phone.
 - Asi on the studio second pass (e431014): "I think for prototype this is great. We can get into the nits and bits of each map later." So lived-in clutter, drawn by script, is accepted as the prototype style. Per-map polish is later work.
+- 2026-11-15, Asi: don't merge this branch; record the decision and file build tickets; drop the Retro Diffusion test. Done: #65, #64 and #61 closed, #60 corrected (own ramps replace ENDESGA 32, maps 1:1), the map #46 updated. Build tickets, all fresh branches from main: #66 drawing scripts, #67 engine (large rooms, walk-behind, lit characters), #68 the Hall, #69 the cast, #70 dialogue box and title screen. None is labelled ready-for-agent. This branch stays as the reference.
 - Limits: the two people reuse an existing body, so a character gets the hero's or Saruli's build and walk. A new body
   (a child, the alien, a coat) means drawing that body once by hand or by code.
