@@ -1,13 +1,14 @@
 # The Hall: the room the world starts in, 1280x736 px (40x23 tiles of 32 px, one art pixel per game pixel), by day
 # and in the evening. The style, the palette and the primitives are draw.py's (read its header first), and how a
 # room is laid out on the tile grid is the studio's (rooms/studio.py).
-# Its look is atomic-age retro-futurist, to sit with the hologram: a deck of steel plates, a two-tone enamel wall
-# with pipes and portholes, the top doorway a bulkhead, terminals, a jukebox, a soda machine, lockers, vinyl and
-# chrome. Nothing in it is any game's own (no maker's names, marks or mascots).
+# Its look is atomic-age retro-futurist, to sit with the hologram, and warm: a deck of khaki steel plates, a
+# two-tone cream and oxblood enamel wall with pipes and portholes, the top doorway a bulkhead, terminals, a
+# jukebox, a soda machine, lockers, vinyl and chrome; in the evening the ceiling lights are on. Nothing in it is
+# any game's own (no maker's names, marks or mascots).
 # What the Hall keeps from the old one (Hall.aseprite): its size, the four doorways (top and bottom in columns 18
-# to 21, left in rows 14 to 17, right in rows 3 to 6), the two lounges by the right wall, the plate (once a carpet)
-# that says CHECKPOINT REACHED, the hologram in the middle and where its cast stands. The back wall is three rows high, so
-# the first row anyone stands on is row 3, as before.
+# to 21, left in rows 14 to 17, right in rows 3 to 6), the two lounges by the right wall, the plate (once a
+# carpet) that says CHECKPOINT REACHED, the hologram in the middle and where its cast stands. The back wall is
+# three rows high, so the first row anyone stands on is row 3, as before.
 # Its furniture is its own: nothing here is the studio's drawing (#68: the test rooms shared a desk and plants).
 # Rebuild: python3 -I art/room.py hall
 import math
@@ -53,11 +54,11 @@ TEXT = ('.####..#..##.#####...####.##..#..####....####..#..#...#.#######......##
 
 # --- room shell -----------------------------------------------------------------------------------------------
 def deck(x0, x1, y0, y1, rnd):
-    """Deck plates, 32 px, sage-grey enamel: a soft seam, a rivet each corner, some with tread, a few patched in
-    bare steel or rust-brown, the odd oil stain. Each plate is lit whole (m.plates)."""
+    """Deck plates, 32 px, khaki enamel: a soft seam, a rivet each corner, some with tread, a few patched in
+    darker steel or rust-brown, the odd oil stain. Each plate is lit whole (m.plates)."""
     def plate(px, py):
         k = rnd.random()
-        mt, l = (CARD, 2.4) if k < .015 else (METAL, 3.1) if k < .04 else (WALL, 3 + rnd.choice((0, 0, 0, .12)))
+        mt, l = (CARD, 2.4) if k < .015 else (WALL, 3.1) if k < .04 else (WALL, 3.6 + rnd.choice((0, 0, 0, .12)))
         R(px, py, 32, 32, mt, l); R(px, py, 32, 1, mt, l + .7); R(px, py, 1, 32, mt, l + .5); R(px, py + 31, 32, 1, mt, l - .8); R(px + 31, py, 1, 32, mt, l - .8)
         for rx, ry in ((3, 3), (27, 3), (3, 27), (27, 27)):
             R(px + rx, py + ry, 2, 1, mt, l + 1); R(px + rx, py + ry + 1, 2, 1, mt, l - .9)
@@ -90,7 +91,7 @@ def stripes(x, y, w, h, l=4.4):
 
 
 def wall(x0, x1, rnd):
-    """A stretch of the back wall, two-tone: cream enamel panels above a chrome strip, mint below, riveted seams,
+    """A stretch of the back wall, two-tone: cream enamel panels above a chrome strip, oxblood below, riveted seams,
     rust running down, a kick plate, a red pipe and a steel one under the ceiling."""
     w = x1 - x0
     R(x0, 8, w, 88, PAPER, 3.9)
@@ -98,9 +99,9 @@ def wall(x0, x1, rnd):
         R(sx, 8, 1, 88, PAPER, 2.8); R(sx + 1, 8, 1, 88, PAPER, 4.6)
         for ry in range(30, 54, 8):
             R(sx + 4, ry, 1, 1, PAPER, 2.6); R(sx - 3, ry, 1, 1, PAPER, 2.6)
-    R(x0, 58, w, 28, TEAL, 3.2); R(x0, 58, w, 1, TEAL, 2)
+    R(x0, 58, w, 28, RED, 2.9); R(x0, 58, w, 1, RED, 1.9)
     for sx in range(x0 + 24, x1, 48):
-        R(sx, 58, 1, 28, TEAL, 2.2)
+        R(sx, 58, 1, 28, RED, 2)
     for _ in range(w // 40):
         rx = rnd.randrange(x0, x1 - 16)
         E(rx, rnd.randrange(60, 80), rnd.randrange(8, 18), rnd.randrange(3, 6), CARD, 2.6)                   # rust
@@ -131,9 +132,9 @@ def shell():
     corridor()
     R(0, 0, W, 8, 0, 0); R(0, 0, X0, H, 0, 0); R(X1, 0, W - X1, H, 0, 0); R(0, Y1, W, H - Y1, 0, 0)
     # the side and bottom doorways: the deck runs on through the gap, the wall's ends either side
-    m.plates(0, X0, DOOR_LEFT[0], DOOR_LEFT[1], 16, lambda px, py: (R(px, py, 16, 16, WALL, 2.8), R(px, py + 15, 16, 1, WALL, 2)))
-    m.plates(X1, W, DOOR_RIGHT[0], DOOR_RIGHT[1], 16, lambda px, py: (R(px, py, 16, 16, WALL, 2.8), R(px, py + 15, 16, 1, WALL, 2)))
-    m.plates(x0, x1, Y1, H, 16, lambda px, py: (R(px, py, 16, 16, WALL, 2.8), R(px + 15, py, 1, 16, WALL, 2)))
+    m.plates(0, X0, DOOR_LEFT[0], DOOR_LEFT[1], 16, lambda px, py: (R(px, py, 16, 16, WALL, 3.4), R(px, py + 15, 16, 1, WALL, 2.6)))
+    m.plates(X1, W, DOOR_RIGHT[0], DOOR_RIGHT[1], 16, lambda px, py: (R(px, py, 16, 16, WALL, 3.4), R(px, py + 15, 16, 1, WALL, 2.6)))
+    m.plates(x0, x1, Y1, H, 16, lambda px, py: (R(px, py, 16, 16, WALL, 3.4), R(px + 15, py, 1, 16, WALL, 2.6)))
     for x, (y0, y1) in ((0, DOOR_LEFT), (X1, DOOR_RIGHT)):
         R(x, y0 - 6, X0, 6, METAL, 3.4); R(x, y0 - 6, X0, 1, METAL, 4.4); R(x, y1, X0, 6, METAL, 2.4)
     R(x0 - 8, Y1, 8, H - Y1, METAL, 3); R(x1, Y1, 8, H - Y1, METAL, 2.4)
@@ -145,7 +146,7 @@ def corridor():
     """Through the top doorway: an arch, the corridor's deck going away, a closed bulkhead at its end, lit."""
     x0, x1 = DOOR_X
     rnd = random.Random(21)
-    m.plates(x0, x1, 32, Y0, 16, lambda px, py: (R(px, py, 16, 16, WALL, 2.7 + rnd.choice((0, .2))), R(px, py + 15, 16, 1, WALL, 1.8)))
+    m.plates(x0, x1, 32, Y0, 16, lambda px, py: (R(px, py, 16, 16, WALL, 3.3 + rnd.choice((0, .2))), R(px, py + 15, 16, 1, WALL, 2.4)))
     R(x0, 12, x1 - x0, 20, TEAL, 3.4)
     for i in range(4):
         R(x0, 15 + 4 * i, x1 - x0, 1, TEAL, 2.4)
@@ -623,6 +624,9 @@ def room_lights():
         for cx in PORTHOLES:
             sun(cx)
     else:
+        for px in range(200, W, 320):                                                              # the ceiling lights, on
+            for py in (230, 520):
+                light(.9, 30, lambda d, px=px, py=py: d.ellipse((px - 150, py - 110, px + 150, py + 110), fill=255))
         for cx in PORTHOLES:                                                                       # the last of the dusk
             light(.5, 3, [(cx - 22, 74), (cx + 22, 74), (cx + 28, 96), (cx - 28, 96)])
             light(.4, 9, [(cx - 16, 110), (cx + 40, 106), (cx + 70, 170), (cx + 30, 196), (cx - 16, 170)])
