@@ -29,7 +29,7 @@ export default class TextMessage {
 
     const canvas = document.createElement('canvas');
     canvas.width = 500;
-    canvas.height = 48;
+    canvas.height = 56; // two lines as RevealingText lays them out: 8 px down, 32 apart, 16 tall
     canvas.classList.add('TextMessage_canvas');
     this.element.appendChild(canvas);
 
