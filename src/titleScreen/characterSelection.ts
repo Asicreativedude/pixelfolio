@@ -58,9 +58,9 @@ export default class CharacterSelection {
       '/characters/choosingPosAlien.png',
     ];
     this.charSprites = [
-      '/characters/iluz.png',
-      '/characters/chich.png',
-      '/characters/saruli.png',
+      '/cast/iluz.png',
+      '/cast/chich.png',
+      '/cast/saruli.png',
     ];
   }
   handleInput(e: KeyboardEvent) {
