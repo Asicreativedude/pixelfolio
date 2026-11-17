@@ -175,13 +175,16 @@ export default class World {
     this.bindHeroPositionCheck();
     this.startGameLoop();
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        ScreenController.showTitle();
-      }
-    });
+    window.addEventListener('keydown', this.escapeToTitle);
+    document.body.classList.add('in-world'); // shows the touch start button
   }
+  // removed in destroy(): left bound, each trip into the world added one more, still firing on the title screen
+  escapeToTitle = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') ScreenController.showTitle();
+  };
   destroy() {
+    window.removeEventListener('keydown', this.escapeToTitle);
+    document.body.classList.remove('in-world');
     this.map = null;
     this.cameraPerson = null;
     this.isGameRunning = false;

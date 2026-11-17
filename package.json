@@ -10,6 +10,7 @@
     "room": "python3 -I art/room.py",
     "cast": "python3 -I art/cast.py",
     "ui": "python3 -I art/ui.py",
+    "controls": "python3 -I art/controls.py",
     "test": "node --test test/*.test.ts"
   },
   "devDependencies": {

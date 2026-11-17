@@ -1,4 +1,4 @@
-import { getPlayerData } from '../utils/progressTracker';
+import { getPlayerData, isReturningPlayer } from '../utils/progressTracker';
 import { ScreenController } from '../utils/screenContorller';
 import utils from '../utils/utils';
 import { heroInitialState } from '../world/maps';
@@ -27,10 +27,12 @@ export default class TitleScreen {
     this.canvas = gameContainer.querySelector('canvas')!;
     this.ctx = this.canvas.getContext('2d')!;
     this.selectedOption = 0;
+    // a save makes the first line CONTINUE GAME (art/ui.py): it starts 20 px further left, and so does the arrow
+    const returning = isReturningPlayer();
     this.titleOptions = [
       {
-        label: 'Start Game',
-        x: 204,
+        label: returning ? 'Continue Game' : 'Start Game',
+        x: returning ? 184 : 204,
         y: 187,
         action: () => {
           this.gameStarted = true;
@@ -110,7 +112,7 @@ export default class TitleScreen {
       },
     });
     this.titleTexts = new Image();
-    this.titleTexts.src = '/title/menu.png';
+    this.titleTexts.src = returning ? '/title/menu-continue.png' : '/title/menu.png';
   }
 
   drawTitleScreen() {
