@@ -3,27 +3,34 @@
 // #52's floating stick + A button + rotate prompt (prototype/mobile-controls, ?controls=stick&layout=rotate), redrawn
 // in three skins by art/prototype_controls.py, plus a menu button that only shows in the world.
 //
-//   ?skin=paper    the dialogue box's paper and amber Next button; the menu is a paper tab          (default)
-//   ?skin=arcade   the Hall's metal and red: bat-top stick in a gate, domed arcade A; the menu a pause pill
-//   ?skin=ghost    pale amber marks and their shadows, nearly nothing over the game; the menu three bars
+// Round 1, Asi on a phone: arcade, menu top left; the menu button needs work; the stick should show itself.
+//   ?skin=arcade   the Hall's metal and red: bat-top stick in a gate, domed arcade A                (default)
+//   ?skin=paper    the dialogue box's paper and amber Next button
+//   ?skin=ghost    pale amber marks and their shadows, nearly nothing over the game
 //   ?menu=card     the menu button pauses the game under a card: Resume / Title screen            (default)
 //   ?menu=direct   the menu button goes straight to the title, like Escape
 //   ?pos=left|centre|right   where the menu button sits along the top edge                       (default left)
+//   ?btn=pill|start|coin     the arcade menu button: a pause pill, a round start button, a coin door (default pill)
+//   ?stick=flash   the stick blinks at its rest spot (bottom left) when the world first opens, then hides (default)
+//   ?stick=rest    the stick always sits at its rest spot, dimmed; it jumps under the thumb and comes back
+// The title's first option reads CONTINUE GAME once there is a save (TitleScreen.ts, art/prototype_title.py).
 //
-// The switcher at the bottom flips all three live, no reload, so you can compare in the middle of a room:
-// the arrows step through skin x menu, the third button moves the menu button.
+// The switcher at the bottom has a button per param: a tap moves it on, live, no reload.
 // On a phone: npm run dev -- --host, then open the Network URL it prints, in landscape.
 // Every control is a synthetic key event the game already listens for (arrows, Enter, Escape): no game logic changes.
 import './touchControls.css';
 
-const SKINS = ['paper', 'arcade', 'ghost'];
-const MENUS = ['card', 'direct'];
-const POSITIONS = ['left', 'centre', 'right'];
+// each param's options, the first the default
+const OPTIONS: Record<string, string[]> = {
+  skin: ['arcade', 'paper', 'ghost'],
+  menu: ['card', 'direct'],
+  pos: ['left', 'centre', 'right'],
+  btn: ['pill', 'start', 'coin'],
+  stick: ['flash', 'rest'],
+};
 const q = new URLSearchParams(location.search);
-const pick = (name: string, options: string[]) => (options.includes(q.get(name)!) ? q.get(name)! : options[0]);
-let skin = pick('skin', SKINS);
-let menuMode = pick('menu', MENUS);
-let pos = pick('pos', POSITIONS);
+const opt: Record<string, string> = {};
+for (const [name, options] of Object.entries(OPTIONS)) opt[name] = options.includes(q.get(name)!) ? q.get(name)! : options[0];
 
 const KEYS: Record<string, string> = {
   up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', a: 'Enter', menu: 'Escape',
@@ -45,7 +52,7 @@ const el = <T extends HTMLElement = HTMLDivElement>(tag: string, cls: string, ht
 };
 const sprite = (img: HTMLImageElement, part: string) => {
   img.onload = () => img.style.setProperty('--w', String(img.naturalWidth));
-  img.src = `/prototype/controls/${skin}-${part}.png`;
+  img.src = `/prototype/controls/${opt.skin}-${part}.png`;
 };
 
 // ---------- layout: #52's fit, landscape only ----------
@@ -81,12 +88,31 @@ const px = () => parseFloat(document.body.style.getPropertyValue('--px')) || 2;
 let stickId: number | null = null, sx = 0, sy = 0;
 const isFree = (e: PointerEvent) => !(e.target as HTMLElement).closest('.proto-ui, button, a');
 const paused = () => document.body.classList.contains('proto-paused');
+// at rest (CSS places it bottom left), under the thumb (inline left/top), or hidden
+function stickAt(where: 'rest' | 'thumb' | 'hidden') {
+  for (const s of [base, knob]) {
+    s.classList.toggle('at-rest', where === 'rest');
+    s.classList.remove('flash');
+    Object.assign(s.style, where === 'thumb' ? { left: `${sx}px`, top: `${sy}px`, display: 'block' } : { left: '', top: '', display: '' });
+    s.style.translate = '';
+  }
+}
+const stickIdle = () => stickAt(opt.stick === 'rest' ? 'rest' : 'hidden');
+// ?stick=flash: the first time the world opens, the stick blinks at its rest spot, then hides
+let flashed = false;
+function flashStick() {
+  if (flashed || opt.stick !== 'flash' || stickId !== null) return;
+  flashed = true;
+  stickAt('rest');
+  for (const s of [base, knob]) s.classList.add('flash');
+  base.addEventListener('animationend', () => stickId === null && stickIdle(), { once: true });
+}
 addEventListener('pointerdown', (e) => {
   if (!isFree(e) || paused() || stickId !== null) return;
   stickId = e.pointerId;
   sx = e.clientX;
   sy = e.clientY;
-  for (const s of [base, knob]) Object.assign(s.style, { left: `${sx}px`, top: `${sy}px`, display: 'block', translate: '' });
+  stickAt('thumb');
 });
 addEventListener('pointermove', (e) => {
   if (e.pointerId !== stickId || paused()) return;
@@ -97,7 +123,7 @@ addEventListener('pointermove', (e) => {
 const stickEnd = (e: PointerEvent) => {
   if (e.pointerId !== stickId) return;
   stickId = null;
-  base.style.display = knob.style.display = 'none';
+  stickIdle();
   hold(null);
 };
 addEventListener('pointerup', stickEnd);
@@ -134,7 +160,7 @@ const setPaused = (on: boolean) => {
   }
   readout();
 };
-menu.addEventListener('click', () => (menuMode === 'card' ? setPaused(true) : press('menu')));
+menu.addEventListener('click', () => (opt.menu === 'card' ? setPaused(true) : press('menu')));
 card.addEventListener('click', (e) => {
   const act = (e.target as HTMLElement).closest('button')?.dataset.do;
   if (!act && e.target !== card) return;
@@ -147,6 +173,7 @@ setInterval(() => {
   if (inWorld !== document.body.classList.contains('proto-in-world')) {
     document.body.classList.toggle('proto-in-world', inWorld);
     if (!inWorld) setPaused(false);
+    else flashStick();
   }
 }, 250);
 
@@ -161,40 +188,34 @@ rot.addEventListener('click', async () => {
   }
 });
 
-// ---------- switcher: flips skin and menu live ----------
-const COMBOS = SKINS.flatMap((s) => MENUS.map((m) => [s, m]));
+// ---------- switcher: a button per param, a tap moves it on ----------
 const bar = el(
   'div',
   'proto-switch',
-  '<button data-d="-1">◀</button><span></span><button data-d="1">▶</button><button data-pos>pos</button>'
+  Object.keys(OPTIONS).map((name) => `<button data-opt="${name}"></button>`).join('') + '<span></span>'
 );
 const label = bar.querySelector('span')!;
 bar.addEventListener('click', (e) => {
-  const t = e.target as HTMLElement;
-  if (t.dataset.pos !== undefined) {
-    pos = POSITIONS[(POSITIONS.indexOf(pos) + 1) % POSITIONS.length];
-    return apply();
-  }
-  const d = Number(t.dataset.d);
-  if (!d) return;
-  const i = COMBOS.findIndex(([s, m]) => s === skin && m === menuMode);
-  [skin, menuMode] = COMBOS[(i + d + COMBOS.length) % COMBOS.length];
+  const name = (e.target as HTMLElement).dataset.opt;
+  if (!name) return;
+  const options = OPTIONS[name];
+  opt[name] = options[(options.indexOf(opt[name]) + 1) % options.length];
   apply();
 });
 function readout() {
-  label.textContent = `${skin} · menu ${menuMode} ${pos}${held ? ` · ${held}` : ''}${paused() ? ' · paused' : ''}`;
+  label.textContent = `${held ?? ''}${paused() ? ' paused' : ''}`;
 }
 function apply() {
-  for (const s of SKINS) document.body.classList.toggle(`skin-${s}`, s === skin);
-  for (const p of POSITIONS) document.body.classList.toggle(`pos-${p}`, p === pos);
+  for (const [name, options] of Object.entries(OPTIONS))
+    for (const o of options) document.body.classList.toggle(`${name}-${o}`, o === opt[name]);
+  for (const b of bar.querySelectorAll<HTMLElement>('[data-opt]')) b.textContent = opt[b.dataset.opt!];
   sprite(base, 'base');
   sprite(knob, 'knob');
   sprite(a, 'a');
-  sprite(menu, 'menu');
+  sprite(menu, opt.skin === 'arcade' && opt.btn !== 'pill' ? `menu-${opt.btn}` : 'menu');
+  if (stickId === null) stickIdle();
   // keeps the game's own dev params (?map=, ?time=) in the URL
-  q.set('skin', skin);
-  q.set('menu', menuMode);
-  q.set('pos', pos);
+  for (const name of Object.keys(OPTIONS)) q.set(name, opt[name]);
   history.replaceState(null, '', `?${q}`);
   readout();
 }

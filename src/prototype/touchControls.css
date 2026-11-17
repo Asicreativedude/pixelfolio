@@ -26,8 +26,24 @@ img.proto-ui {
   pointer-events: none;
   transform: translate(-50%, -50%);
 }
-.skin-paper .proto-base { opacity: 0.85; }
-.skin-arcade .proto-base { opacity: 0.8; }
+/* its rest spot, bottom left, mirroring the A button: ?stick=rest keeps it there dimmed, ?stick=flash blinks it */
+.proto-base.at-rest,
+.proto-knob.at-rest {
+  display: block;
+  left: calc(var(--px) * 36 + env(safe-area-inset-left));
+  top: calc(100% - var(--px) * 36 - env(safe-area-inset-bottom));
+  opacity: 0.45;
+}
+.proto-base.flash,
+.proto-knob.flash {
+  animation: proto-flash 0.6s steps(1) 4;
+}
+@keyframes proto-flash {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.skin-paper .proto-base:not(.at-rest) { opacity: 0.85; }
+.skin-arcade .proto-base:not(.at-rest) { opacity: 0.8; }
 
 .proto-a {
   right: calc(var(--px) * 12 + env(safe-area-inset-right));
@@ -118,7 +134,7 @@ img.proto-ui {
   .proto-rotate { display: flex; }
 }
 
-/* variant switcher: not part of the design */
+/* variant switcher: not part of the design, a button per param */
 .proto-switch {
   left: 50%;
   bottom: calc(4px + env(safe-area-inset-bottom));

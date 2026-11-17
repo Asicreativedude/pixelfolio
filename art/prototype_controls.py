@@ -113,6 +113,27 @@ def arcade():
     return base, knob, a, menu
 
 
+TINY = {'M': ['#.#', '###', '#.#', '#.#', '#.#'], 'E': ['###', '#..', '##.', '#..', '###'],
+        'N': ['##.', '#.#', '#.#', '#.#', '#.#'], 'U': ['#.#', '#.#', '#.#', '#.#', '###']}
+
+
+def arcade_menus():
+    # two more menu buttons for the arcade skin (#63: "the menu button needs some work"); the pill is arcade-menu.png
+    start = Pic(26, 26)                                       # a small round start button, amber like the lamps
+    start.shape(disc(13, 13, 13), METAL, 3, 4, 1)
+    start.shape(disc(13, 13, 9), FLOOR, 4, 5, 2, shadow=False)
+    start.shape(disc(10, 10, 3), FLOOR, 5, shadow=False)
+    for y in (9, 12, 15): start.shape(rect(9, y, 9, 2), FLOOR, 0, shadow=False)
+    coin = Pic(26, 30)                                        # a coin door: a lit MENU label over the coin slot
+    coin.shape(rect(0, 0, 26, 30), METAL, 3, 4, 1)
+    coin.shape(rect(3, 3, 20, 9), METAL, 1, 0, 2, shadow=False, recess=True)
+    for i, ch in enumerate('MENU'):
+        coin.shape(glyph(TINY[ch], 5 + i * 4, 5), RED, 6, shadow=False)
+    coin.shape(rect(9, 14, 8, 13), RED, 4, 5, 2, shadow=False)          # the lit frame round the slot
+    coin.shape(rect(12, 16, 2, 9), RED, 0, shadow=False)
+    return {'start': start, 'coin': coin}
+
+
 def ghost():
     base = Pic(48, 48)
     chevrons(base, 24, 24, 22, PAPER, 6)
@@ -136,3 +157,5 @@ if __name__ == '__main__':
         base.save(f'{name}-base.png'); knob.save(f'{name}-knob.png'); menu.save(f'{name}-menu.png')
         a(True).save(f'{name}-a.png')
         a(False).save(f'{name}-a-on.png', dy=1)
+    for name, pic in arcade_menus().items():
+        pic.save(f'arcade-menu-{name}.png')
