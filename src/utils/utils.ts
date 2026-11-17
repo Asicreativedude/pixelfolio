@@ -59,6 +59,14 @@ const utils = {
     return light?.[`${tile(x)},${tile(y)}`] ?? 0;
   },
 
+  // The touch stick's direction for a thumb (dx, dy) screen px from where it went down: four directions, the
+  // larger axis wins, nothing inside the dead zone (#52).
+  stickDirection(dx: number, dy: number) {
+    if (Math.hypot(dx, dy) < 14) return null;
+    if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+    return dy > 0 ? 'down' : 'up';
+  },
+
   // Returns the reverse of a given direction string.
   // Example: 'left' → 'right', 'up' → 'down'
 

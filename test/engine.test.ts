@@ -40,3 +40,12 @@ test('a figure takes the lit sheet of the tile under it', () => {
   assert.equal(utils.lightAt(light, 32, 96), 0); // a tile the map does not light
   assert.equal(utils.lightAt(undefined, 64, 96), 0); // a map with no light grid (the Hall)
 });
+
+test('the stick reads four directions past a 14 px dead zone', () => {
+  assert.equal(utils.stickDirection(0, 0), null);
+  assert.equal(utils.stickDirection(9, -10), null); // 13.5 px out: still inside
+  assert.equal(utils.stickDirection(14, 0), 'right');
+  assert.equal(utils.stickDirection(-20, 5), 'left');
+  assert.equal(utils.stickDirection(3, 30), 'down');
+  assert.equal(utils.stickDirection(-10, -15), 'up'); // the larger axis wins
+});

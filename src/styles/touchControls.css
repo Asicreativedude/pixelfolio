@@ -1,0 +1,68 @@
+/* The touch controls (#71), see src/utils/touchControls.ts. --px is one art pixel, set by its fit(). Only a touch
+   device (html.touch) gets the controls, so a keyboard player sees none. */
+html.touch,
+html.touch body {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-ui {
+  position: fixed;
+  z-index: 1000;
+}
+.touch-sprite {
+  width: calc(var(--w, 0) * var(--px));
+  image-rendering: pixelated;
+  -webkit-user-drag: none;
+}
+
+/* the stick: at rest bottom left and dimmed; held, it sits where the thumb went down (inline left/top) */
+.touch-stick {
+  left: calc(var(--px) * 36 + env(safe-area-inset-left));
+  top: calc(100% - var(--px) * 36 - env(safe-area-inset-bottom));
+  opacity: 0.45;
+  pointer-events: none;
+}
+.touch-stick.held {
+  opacity: 0.8;
+}
+.touch-stick img {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.touch-a {
+  right: calc(var(--px) * 12 + env(safe-area-inset-right));
+  bottom: calc(var(--px) * 14 + env(safe-area-inset-bottom));
+}
+
+.touch-start {
+  display: none;
+  top: calc(var(--px) * 5 + env(safe-area-inset-top));
+  left: calc(var(--px) * 6 + env(safe-area-inset-left));
+}
+.in-world .touch-start {
+  display: block;
+}
+
+/* portrait (#52), in the rooms' K and HI */
+.touch-turn {
+  display: none;
+  inset: 0;
+  z-index: 1001;
+  background: #131c2b;
+  color: #fff3c7;
+  font: 700 22px/1.4 'Farro', sans-serif;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+@media (orientation: portrait) {
+  .touch-turn {
+    display: flex;
+  }
+}
