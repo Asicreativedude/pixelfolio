@@ -3,21 +3,27 @@
 // #52's floating stick + A button + rotate prompt (prototype/mobile-controls, ?controls=stick&layout=rotate), redrawn
 // in three skins by art/prototype_controls.py, plus a menu button that only shows in the world.
 //
-//   ?skin=paper    the dialogue box's paper and amber Next button. Menu: a paper tab, top left      (default)
-//   ?skin=arcade   the Hall's metal and red: bat-top stick in a gate, domed arcade A. Menu: a pause pill, top right
-//   ?skin=ghost    pale amber marks and their shadows, nearly nothing over the game. Menu: three bars, top centre
-//   ?menu=card     the menu button opens a pause card: Resume / Title screen                      (default)
+//   ?skin=paper    the dialogue box's paper and amber Next button; the menu is a paper tab          (default)
+//   ?skin=arcade   the Hall's metal and red: bat-top stick in a gate, domed arcade A; the menu a pause pill
+//   ?skin=ghost    pale amber marks and their shadows, nearly nothing over the game; the menu three bars
+//   ?menu=card     the menu button pauses the game under a card: Resume / Title screen            (default)
 //   ?menu=direct   the menu button goes straight to the title, like Escape
+//   ?pos=left|centre|right   where the menu button sits along the top edge                       (default left)
 //
-// The switcher at the bottom flips both live, no reload, so you can compare in the middle of a room.
+// The switcher at the bottom flips all three live, no reload, so you can compare in the middle of a room:
+// the arrows step through skin x menu, the third button moves the menu button.
+// On a phone: npm run dev -- --host, then open the Network URL it prints, in landscape.
 // Every control is a synthetic key event the game already listens for (arrows, Enter, Escape): no game logic changes.
 import './touchControls.css';
 
 const SKINS = ['paper', 'arcade', 'ghost'];
 const MENUS = ['card', 'direct'];
+const POSITIONS = ['left', 'centre', 'right'];
 const q = new URLSearchParams(location.search);
-let skin = SKINS.includes(q.get('skin')!) ? q.get('skin')! : 'paper';
-let menuMode = MENUS.includes(q.get('menu')!) ? q.get('menu')! : 'card';
+const pick = (name: string, options: string[]) => (options.includes(q.get(name)!) ? q.get(name)! : options[0]);
+let skin = pick('skin', SKINS);
+let menuMode = pick('menu', MENUS);
+let pos = pick('pos', POSITIONS);
 
 const KEYS: Record<string, string> = {
   up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', a: 'Enter', menu: 'Escape',
@@ -83,7 +89,7 @@ addEventListener('pointerdown', (e) => {
   for (const s of [base, knob]) Object.assign(s.style, { left: `${sx}px`, top: `${sy}px`, display: 'block', translate: '' });
 });
 addEventListener('pointermove', (e) => {
-  if (e.pointerId !== stickId) return;
+  if (e.pointerId !== stickId || paused()) return;
   const dx = e.clientX - sx, dy = e.clientY - sy, reach = 14 * px(), k = Math.min(1, reach / (Math.hypot(dx, dy) || 1));
   knob.style.translate = `${dx * k}px ${dy * k}px`;
   hold(dirFrom(dx, dy, 14));
@@ -103,6 +109,7 @@ a.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   sprite(a, 'a-on');
   key('keydown', 'a');
+  a.setPointerCapture(e.pointerId); // a thumb sliding off still lets go of Enter. Last: it throws on a pointer that is not down
 });
 const aUp = () => (sprite(a, 'a'), key('keyup', 'a'));
 a.addEventListener('pointerup', aUp);
@@ -116,8 +123,15 @@ const card = el(
   '<div><p>Paused</p><button data-do="resume">Resume</button><button data-do="title">Title screen</button></div>'
 );
 const setPaused = (on: boolean) => {
+  if (on === paused()) return;
   document.body.classList.toggle('proto-paused', on);
   if (on) hold(null);
+  // a real pause: World's loop stops on isGameRunning and is started again on resume
+  const w = world();
+  if (w?.map) {
+    w.isGameRunning = !on;
+    if (!on) w.startGameLoop();
+  }
   readout();
 };
 menu.addEventListener('click', () => (menuMode === 'card' ? setPaused(true) : press('menu')));
@@ -149,25 +163,39 @@ rot.addEventListener('click', async () => {
 
 // ---------- switcher: flips skin and menu live ----------
 const COMBOS = SKINS.flatMap((s) => MENUS.map((m) => [s, m]));
-const bar = el('div', 'proto-switch', '<button data-d="-1">◀</button><span></span><button data-d="1">▶</button>');
+const bar = el(
+  'div',
+  'proto-switch',
+  '<button data-d="-1">◀</button><span></span><button data-d="1">▶</button><button data-pos>pos</button>'
+);
 const label = bar.querySelector('span')!;
 bar.addEventListener('click', (e) => {
-  const d = Number((e.target as HTMLElement).dataset.d);
+  const t = e.target as HTMLElement;
+  if (t.dataset.pos !== undefined) {
+    pos = POSITIONS[(POSITIONS.indexOf(pos) + 1) % POSITIONS.length];
+    return apply();
+  }
+  const d = Number(t.dataset.d);
   if (!d) return;
   const i = COMBOS.findIndex(([s, m]) => s === skin && m === menuMode);
   [skin, menuMode] = COMBOS[(i + d + COMBOS.length) % COMBOS.length];
   apply();
 });
 function readout() {
-  label.textContent = `${skin} · menu ${menuMode}${held ? ` · ${held}` : ''}${paused() ? ' · paused' : ''}`;
+  label.textContent = `${skin} · menu ${menuMode} ${pos}${held ? ` · ${held}` : ''}${paused() ? ' · paused' : ''}`;
 }
 function apply() {
   for (const s of SKINS) document.body.classList.toggle(`skin-${s}`, s === skin);
+  for (const p of POSITIONS) document.body.classList.toggle(`pos-${p}`, p === pos);
   sprite(base, 'base');
   sprite(knob, 'knob');
   sprite(a, 'a');
   sprite(menu, 'menu');
-  history.replaceState(null, '', `?skin=${skin}&menu=${menuMode}`);
+  // keeps the game's own dev params (?map=, ?time=) in the URL
+  q.set('skin', skin);
+  q.set('menu', menuMode);
+  q.set('pos', pos);
+  history.replaceState(null, '', `?${q}`);
   readout();
 }
 apply();

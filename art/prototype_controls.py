@@ -8,8 +8,8 @@
 # them. usage (repo root): python3 -I art/prototype_controls.py
 import os, sys
 from PIL import Image
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from draw import FLOOR, METAL, RED, PAPER, RAMPS, K, HI, rgb
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))     # python3 -I leaves the script's folder out
+from draw import FLOOR, METAL, RED, PAPER, RAMPS, K, rgb
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'prototype', 'controls')
 SH = 2                          # room of the cast shadow, right and down
@@ -31,7 +31,7 @@ def rect(x0, y0, w, h):
 
 def glyph(rows, x0, y0, s=1):
     return lambda x, y: (0 <= (x - x0) // s < len(rows[0]) and 0 <= (y - y0) // s < len(rows)
-                         and x >= x0 and y >= y0 and rows[(y - y0) // s][(x - x0) // s] == '#')
+                         and rows[(y - y0) // s][(x - x0) // s] == '#')
 
 
 class Pic:
@@ -39,7 +39,7 @@ class Pic:
         self.w, self.h, self.px = w + SH, h + SH, {}
 
     def shape(self, inside, m, body, lit=None, dark=None, shadow=True, recess=False):
-        # lit top edge and dark bottom edge, swapped for a recess (a hole is lit at the bottom)
+        # m is a ramp (draw.py), body/lit/dark its levels 0 (K) to 6 (HI). Lit top edge and dark bottom edge, swapped for a recess (a hole is lit at the bottom)
         pts = [(x, y) for y in range(self.h) for x in range(self.w) if inside(x, y)]
         if shadow:
             for x, y in pts:
@@ -51,7 +51,7 @@ class Pic:
             c = body
             if top is not None and not inside(x, y - 1): c = top
             elif bot is not None and not inside(x, y + 1): c = bot
-            self.px[(x, y)] = RAMPS[m][c] if isinstance(c, int) else c
+            self.px[(x, y)] = RAMPS[m][c]
 
     def save(self, name, dy=0):         # dy=1 and no shadow: the pressed button, pushed into the screen
         im = Image.new('RGBA', (self.w, self.h + 1))
@@ -60,7 +60,7 @@ class Pic:
         im.save(os.path.join(OUT, name)); print('controls: built', name)
 
 
-def chevrons(p, cx, cy, r, m, l, shadow=True):
+def chevrons(p, cx, cy, r, ramp, level, shadow=True):
     # four little arrowheads pointing out, at radius r
     for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
         tip = (cx + dx * r, cy + dy * r)
@@ -69,8 +69,8 @@ def chevrons(p, cx, cy, r, m, l, shadow=True):
             for j in range(-i, i + 1):
                 x = tip[0] - dx * i + (j if dy else 0)
                 y = tip[1] - dy * i + (j if dx else 0)
-                pts.add((int(x), int(y)))
-        p.shape(lambda x, y, s=frozenset(pts): (x, y) in s, m, l, shadow=shadow)
+                pts.add((x, y))
+        p.shape(lambda x, y, s=frozenset(pts): (x, y) in s, ramp, level, shadow=shadow)
 
 
 def paper():

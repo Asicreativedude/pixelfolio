@@ -14,7 +14,7 @@ body {
   z-index: 1000;
 }
 img.proto-ui {
-  width: calc(var(--w, 0) * var(--px, 2px));
+  width: calc(var(--w, 0) * var(--px));
   image-rendering: pixelated;
   -webkit-user-drag: none;
 }
@@ -35,15 +35,16 @@ img.proto-ui {
 }
 .skin-ghost .proto-a { opacity: 0.75; }
 
-/* the menu button, only in the world; each skin puts it somewhere else */
+/* the menu button, only in the world; ?pos= puts it left, centre or right along the top */
 .proto-menu {
   display: none;
   top: calc(var(--px) * 5 + env(safe-area-inset-top));
 }
 .proto-in-world .proto-menu { display: block; }
-.skin-paper .proto-menu { left: calc(var(--px) * 6 + env(safe-area-inset-left)); }
-.skin-arcade .proto-menu { right: calc(var(--px) * 6 + env(safe-area-inset-right)); }
-.skin-ghost .proto-menu { left: 50%; translate: -50% 0; opacity: 0.75; }
+.pos-left .proto-menu { left: calc(var(--px) * 6 + env(safe-area-inset-left)); }
+.pos-right .proto-menu { right: calc(var(--px) * 6 + env(safe-area-inset-right)); }
+.pos-centre .proto-menu { left: 50%; translate: -50% 0; }
+.skin-ghost .proto-menu { opacity: 0.75; }
 
 /* the pause card, in each skin's material: the same paper, metal or bare marks as the buttons */
 .proto-card {
