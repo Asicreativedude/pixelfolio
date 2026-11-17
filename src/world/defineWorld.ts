@@ -163,6 +163,7 @@ export default class World {
   // Starts the game loop.
 
   init(): void {
+    (window as any).__world = this; // PROTOTYPE (#63): touch controls hook
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.startMap(devStart ?? worldMaps.Hall, devStart?.entrance);
 
@@ -182,6 +183,7 @@ export default class World {
     });
   }
   destroy() {
+    if ((window as any).__world === this) (window as any).__world = null; // PROTOTYPE (#63)
     this.map = null;
     this.cameraPerson = null;
     this.isGameRunning = false;

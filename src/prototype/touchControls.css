@@ -1,0 +1,144 @@
+/* PROTOTYPE (#63): throwaway touch controls, see touchControls.ts. --px is one art pixel, set by fit(). */
+html,
+body {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.proto-ui {
+  position: fixed;
+  z-index: 1000;
+}
+img.proto-ui {
+  width: calc(var(--w, 0) * var(--px, 2px));
+  image-rendering: pixelated;
+  -webkit-user-drag: none;
+}
+
+/* the stick: the base and the knob appear under the thumb, centred on it */
+.proto-base,
+.proto-knob {
+  display: none;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.skin-paper .proto-base { opacity: 0.85; }
+.skin-arcade .proto-base { opacity: 0.8; }
+
+.proto-a {
+  right: calc(var(--px) * 12 + env(safe-area-inset-right));
+  bottom: calc(var(--px) * 14 + env(safe-area-inset-bottom));
+}
+.skin-ghost .proto-a { opacity: 0.75; }
+
+/* the menu button, only in the world; each skin puts it somewhere else */
+.proto-menu {
+  display: none;
+  top: calc(var(--px) * 5 + env(safe-area-inset-top));
+}
+.proto-in-world .proto-menu { display: block; }
+.skin-paper .proto-menu { left: calc(var(--px) * 6 + env(safe-area-inset-left)); }
+.skin-arcade .proto-menu { right: calc(var(--px) * 6 + env(safe-area-inset-right)); }
+.skin-ghost .proto-menu { left: 50%; translate: -50% 0; opacity: 0.75; }
+
+/* the pause card, in each skin's material: the same paper, metal or bare marks as the buttons */
+.proto-card {
+  display: none;
+  inset: 0;
+  z-index: 1001;
+  align-items: center;
+  justify-content: center;
+  background: rgba(19, 28, 43, 0.55);
+  font: 700 calc(var(--px) * 8) / 1 'Farro', sans-serif;
+}
+.proto-paused .proto-card { display: flex; }
+.proto-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 8) calc(var(--px) * 12);
+  min-width: calc(var(--px) * 110);
+  text-align: center;
+}
+.proto-card p { margin-bottom: calc(var(--px) * 2); }
+.proto-card button {
+  border: 0;
+  padding: calc(var(--px) * 5) calc(var(--px) * 8);
+  font: inherit;
+  cursor: pointer;
+}
+/* paper: textMessage.css's card and Next button */
+.skin-paper .proto-card > div {
+  background: #f0e6c0;
+  box-shadow: inset 0 var(--px) #fff3c7, inset 0 calc(var(--px) * -1) #8fa6a0, var(--px) calc(var(--px) * 2) #131c2b;
+  color: #131c2b;
+}
+.skin-paper .proto-card button {
+  background: #c08a4a;
+  box-shadow: inset 0 var(--px) #eab760, inset 0 calc(var(--px) * -1) #8a6a4a;
+  color: #131c2b;
+}
+/* arcade: METAL plate, RED buttons */
+.skin-arcade .proto-card > div {
+  background: #6c8794;
+  box-shadow: inset 0 var(--px) #a3b5ac, inset 0 calc(var(--px) * -1) #22364c, var(--px) calc(var(--px) * 2) #131c2b;
+  color: #fff3c7;
+}
+.skin-arcade .proto-card button {
+  background: #d96a42;
+  box-shadow: inset 0 var(--px) #f4a25c, inset 0 calc(var(--px) * -1) #6a2f4d;
+  color: #fff3c7;
+}
+/* ghost: no card, pale amber words with their shadows */
+.skin-ghost .proto-card > div,
+.skin-ghost .proto-card button {
+  background: none;
+  color: #fff3c7;
+  text-shadow: var(--px) var(--px) #131c2b;
+}
+
+/* rotate prompt (#52), in the rooms' K and HI */
+.proto-rotate {
+  display: none;
+  inset: 0;
+  z-index: 1002;
+  background: #131c2b;
+  color: #fff3c7;
+  font: 700 22px/1.4 'Farro', sans-serif;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+@media (orientation: portrait) {
+  .proto-rotate { display: flex; }
+}
+
+/* variant switcher: not part of the design */
+.proto-switch {
+  left: 50%;
+  bottom: calc(4px + env(safe-area-inset-bottom));
+  translate: -50% 0;
+  z-index: 1003;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px;
+  border-radius: 999px;
+  background: #ff3df5;
+  color: #000;
+  font: 700 11px ui-monospace, monospace;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+.proto-switch button {
+  border: 0;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #000;
+  color: #ff3df5;
+  font: inherit;
+}
