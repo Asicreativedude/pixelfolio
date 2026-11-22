@@ -7,6 +7,7 @@ import {
   createGameObjects,
   worldMaps,
   devStart,
+  devWalls,
 } from './maps';
 import KeyPressListener from '../utils/keyPressListener';
 import { ScreenController } from '../utils/screenContorller';
@@ -78,8 +79,8 @@ export default class World {
     );
     //Draw Upper Layer
     this.map.drawImageLayer(this.ctx, this.cameraPerson, this.map.upperImage);
-    //Draw Debug Walls
-    this.map.drawWallDebug(this.ctx, this.cameraPerson);
+    // Dev only (?walls): the red wall outlines must never reach a production build.
+    if (devWalls) this.map.drawWallDebug(this.ctx, this.cameraPerson);
   }
   startGameLoop() {
     let previousMs: number;
