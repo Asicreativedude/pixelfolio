@@ -163,6 +163,8 @@ export default class World {
   // Starts the game loop.
 
   init(): void {
+    // dev only: the live world for the browser console (CLAUDE.md). The build drops it.
+    if (import.meta.env.DEV) (window as unknown as { __world: World }).__world = this;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.startMap(devStart ?? worldMaps.Hall, devStart?.entrance);
 
