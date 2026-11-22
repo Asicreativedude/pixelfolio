@@ -187,7 +187,8 @@ export function createGameObjects(
   return objects;
 }
 
-// Dev only (npm run dev): /?map=Studio starts the world in that map, ?time=day or ?time=evening picks a room's version.
+// Dev only (npm run dev): /?map=Studio starts the world in that map, ?time=day or ?time=evening picks a room's version,
+// ?walls outlines every wall tile in red.
 const devParams = new URLSearchParams(
   import.meta.env.DEV ? location.search : ''
 );
@@ -1182,3 +1183,5 @@ const devMap = devParams.get('map') ?? '';
 export const devStart = Object.hasOwn(worldMaps, devMap)
   ? worldMaps[devMap]
   : null;
+
+export const devWalls = devParams.has('walls');
